@@ -3,7 +3,7 @@
 - job:
     name: icp-deploy
     project-type: freestyle
-    description: 'Deploy ICP. Under Development'
+    description: 'Deploy ICP. Under Development(incomplete)'
     node: "daily-x86_64"
     wrappers:
         - workspace-cleanup
