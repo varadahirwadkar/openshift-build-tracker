@@ -40,6 +40,9 @@ pipeline {
         stage('Prepare Teraform Template') {
             steps {
                 script {
+                    ansiColor('xterm') {
+                        echo 'something that outputs ansi colored stuff'
+                    }
                     try {
                         sh '''
                             #!/bin/bash
@@ -77,6 +80,9 @@ pipeline {
         stage('Initilize Environment') {
             steps {
                 script {
+                    ansiColor('xterm') {
+                        echo 'something that outputs ansi colored stuff'
+                    }
                     try {
                         sh '''
                         echo 'Setting up the kubectl environment!'
@@ -102,6 +108,9 @@ pipeline {
         stage('Deploy ICP Cluster') {
             steps {
                 script {
+                    ansiColor('xterm') {
+                        echo 'something that outputs ansi colored stuff'
+                    }
                     try {
                         sh '''
                         echo 'Setting up the kubectl environment!'
@@ -125,6 +134,9 @@ pipeline {
         stage('Setup Kubectl') {
             steps {
                 script {
+                    ansiColor('xterm') {
+                        echo 'something that outputs ansi colored stuff'
+                    }
                     try {
                         sh '''
                         echo 'Setting up the kubectl environment!'
@@ -148,6 +160,9 @@ pipeline {
         stage('Run SERT Test') {
             steps {
                 script {
+                    ansiColor('xterm') {
+                        echo 'something that outputs ansi colored stuff'
+                    }
                     try {
                         sh '''
                         echo 'Running SERT test!'
