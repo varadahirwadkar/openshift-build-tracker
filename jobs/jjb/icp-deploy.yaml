@@ -71,7 +71,7 @@
             export DEPLOY_REPO=$Build
             export TF_VAR_repo_user=$GITHUB_USER
             export TF_VAR_repo_token=$ARTIFACTORY_TOKEN
-            git clone git@github.ibm.com:powercloud-cicd/canary-deployments.git
+            git clone git@github.ibm.com:ICP-DevOps/canary-deployments.git
             #Deploy in KVM environment
             if [ "${Infrastructure}" = "KVM" ];
             then
