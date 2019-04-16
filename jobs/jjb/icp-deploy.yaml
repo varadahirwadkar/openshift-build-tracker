@@ -1,0 +1,166 @@
+---
+
+- job:
+    name: icp-deploy
+    project-type: freestyle
+    description: 'Deploy ICP. Under Development'
+    node: "daily-x86_64"
+    wrappers:
+        - workspace-cleanup
+        - credentials-binding:
+            - text:
+                credential-id: GITHUB_TOKEN
+                variable: GITHUB_TOKEN
+            - text:
+                credential-id: GITHUB_USER
+                variable: GITHUB_USER
+            - text:
+                credential-id: TF_VAR_password
+                variable: TF_VAR_password
+            - text:
+                credential-id: ARTIFACTORY_TOKEN
+                variable: ARTIFACTORY_TOKEN
+            - text:
+                credential-id: OS_PASSWORD
+                variable: OS_PASSWORD
+            - text:
+                credential-id: SLACK_TOKEN
+                variable: SLACK_TOKEN
+
+    parameters:
+        - choice:
+            name: Build
+            choices:
+                - daily
+                - edge
+                - stable
+                - release
+            description: "Which ICP build need to be picked"
+        - choice:
+            name: Infrastructure
+            choices:
+                - KVM
+                - PowerVM
+        - choice:
+            name: Distribution
+            choices:
+                - RHEL7.6
+                - RHEL7.5
+                - RHEL7.6-ALT
+                - RHEL7.5-ALT
+                - SLES12-SP4
+                - Ubuntu16.04
+                - Ubuntu18.04
+
+    builders:
+        - shell: |
+            echo 'Hello ICP world!'
+            export TF_VAR_user_name=$GITHUB_USER
+            export DOCKER_USER=$GITHUB_USER
+            export ARTIFACTORY_USER=$GITHUB_USER
+            export OS_INSECURE=true
+            export GITHUB_TOKEN=$GITHUB_TOKEN
+            export ARTIFACTORY_TOKEN=$ARTIFACTORY_TOKEN
+            export OS_USERNAME=$GITHUB_USER
+            export OS_PASSWORD=$OS_PASSWORD
+            export FUNCTIONAL_TEST_REPO=icp-sanity-bats
+            export HOME=$WORKSPACE
+            export TERRAFORM_VER=0.11.13
+            export TARGET="deploy-power-powervc"
+            export TEST_SUITE=ppc64le
+            export DEPLOY_REPO=$Build
+            export TF_VAR_repo_user=$GITHUB_USER
+            export TF_VAR_repo_token=$ARTIFACTORY_TOKEN
+            git clone git@github.ibm.com:powercloud-cicd/canary-deployments.git
+            #Deploy in KVM environment
+            if [ "${Infrastructure}" = "KVM" ];
+            then
+                echo "KVM"
+                URL="auth_url = \"https://9.114.192.184:5000/v3/\""
+                ZONE="availability_zone = \"p9_kvm\""
+                IMAGE="os_image_name = \"cicd-rhel7.6-alt-2019-03-22-ppc64le\""
+                WORKER="worker = { nodes = \"1\", size = \"57b4faf7-59cb-49ae-a6d4-65e4440df1ae\"}"
+                MANAGER="manager = { nodes = \"1\", size = \"8d5a50bb-b51a-429a-9754-25e0a3bd1300\"}"
+                MASTER="master = { nodes = \"1\", size = \"8d5a50bb-b51a-429a-9754-25e0a3bd1300\"}"
+            #Deploy in PowerVM env
+            elif [ "${Infrastructure}" = "PowerVM" ];
+            then
+                echo "PowerVM"
+                URL="auth_url = \"https://9.114.192.193:5000/v3/\""
+                ZONE="availability_zone = \"icp_hosts\""
+                case "$Distribution" in
+                    RHEL7.6-ALT)
+                        IMAGE="os_image_name = \"cicd-rhel7.6-alt-2019-04-04-ppc64le\""
+                        ;;
+                    RHEL7.5-ALT)
+                        IMAGE="os_image_name = \"cicd-rhel7.5-alt-2019-04-03-ppc64le\""
+                        ;;
+                    RHEL7.6)
+                        IMAGE="os_image_name = \"cicd-rhel7.6-2019-04-06-ppc64le\""
+                        ;;
+                    RHEL7.5)
+                        IMAGE="os_image_name = \"cicd-rhel7.5-2019-04-03-ppc64le\""
+                        ;;
+                esac
+
+                MASTER="master = { nodes = \"1\", size = \"80f9f7ab-9796-44d0-b9a2-c840b78fa53c\"}"
+                WORKER="worker = { nodes = \"1\", size = \"5a356c6f-88d7-4c15-9407-af55c5196ceb\"}"
+                MANAGER="manager = { nodes = \"1\", size = \"80f9f7ab-9796-44d0-b9a2-c840b78fa53c\"}"
+            fi
+            cd canary-deployments
+            #Updating tempate file with env variables
+            grep -q '^auth_url =' .deploy-power-powervc.tfvars.template && sed -i "s|^auth_url =.*$|${URL}|g" .deploy-power-powervc.tfvars.template || echo ${URL} >> .deploy-power-powervc.tfvars.template
+            grep -q '^availability_zone =' .deploy-power-powervc.tfvars.template && sed -i "s|^availability_zone =.*$|${ZONE}|g" .deploy-power-powervc.tfvars.template || echo ${ZONE} >> .deploy-power-powervc.tfvars.template
+            grep -q '^os_image_name =' .deploy-power-powervc.tfvars.template && sed -i "s|^os_image_name =.*$|${IMAGE}|g" .deploy-power-powervc.tfvars.template || echo ${IMAGE} >> .deploy-power-powervc.tfvars.template
+            grep -q '^worker =' .deploy-power-powervc.tfvars.template && sed -i "s|^worker = .*$|${WORKER}|g" .deploy-power-powervc.tfvars.template || echo ${WORKER} >> .deploy-power-powervc.tfvars.template
+            grep -q '^manager =' .deploy-power-powervc.tfvars.template && sed -i "s|^manager =.*$|${MANAGER}|g" .deploy-power-powervc.tfvars.template || echo ${MANAGER} >> .deploy-power-powervc.tfvars.template
+            grep -q '^master =' .deploy-power-powervc.tfvars.template && sed -i "s|^master = .*$|${MASTER}|g" .deploy-power-powervc.tfvars.template || echo ${MASTER} >> .deploy-power-powervc.tfvars.template
+            make init
+            make keys
+            make setup-dependencies
+            make $TARGET
+            sleep 60
+            make $TARGET:config
+            make run-functional-tests
+            make $TARGET:clean
+    publishers:
+        - slack:
+            team-domain: 'ibm-systems-power'
+            room: '#icp-ci'
+            auth-token-credential-id: SLACK_TOKEN
+            #commit-info-choice: 'AUTHORS_AND_TITLES'
+            base-url: https://ibm-systems-power.slack.com/services/hooks/jenkins-ci/
+            notify-success: true
+            notify-aborted: true
+            notify-unstable: true
+            notify-failure: true
+            notify-repeated-failure: true
+
+        - postbuildscript:
+           builders:
+             - role: SLAVE
+               build-on:
+                - NOT_BUILT
+                - ABORTED
+                - FAILURE
+               build-steps:
+                - shell:  |
+                    echo 'Hello ICP world!'
+                    export TF_VAR_user_name=$GITHUB_USER
+                    export DOCKER_USER=$GITHUB_USER
+                    export ARTIFACTORY_USER=$GITHUB_USER
+                    export OS_INSECURE=true
+                    export GITHUB_TOKEN=$GITHUB_TOKEN
+                    export ARTIFACTORY_TOKEN=$ARTIFACTORY_TOKEN
+                    export OS_USERNAME=$GITHUB_USER
+                    export OS_PASSWORD=$OS_PASSWORD
+                    export FUNCTIONAL_TEST_REPO=icp-sanity-bats
+                    export HOME=$WORKSPACE
+                    export TERRAFORM_VER=0.11.13
+                    export TARGET="deploy-power-powervc"
+                    export TEST_SUITE=ppc64le
+                    export DEPLOY_REPO=$Build
+                    export TF_VAR_repo_user=$GITHUB_USER
+                    export TF_VAR_repo_token=$ARTIFACTORY_TOKEN
+                    cd canary-deployments
+                    make $TARGET:clean

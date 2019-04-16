@@ -1,0 +1,177 @@
+@Library('pcloud-jenkins-library') _
+
+pipeline {
+    agent {
+        dockerfile {
+            dir 'images/terraform'
+            additionalBuildArgs '--force-rm	--no-cache'
+            label 'daily-x86_64'
+        }
+    }
+    triggers {
+        cron('H H * * *')
+    }
+        environment {
+            GITHUB_USER = credentials('GITHUB_USER')
+            TF_VAR_user_name = credentials('GITHUB_USER')
+            DOCKER_USER = credentials('GITHUB_USER')
+            ARTIFACTORY_USER = credentials('GITHUB_USER')
+            TF_VAR_repo_user = credentials('GITHUB_USER')
+            TF_VAR_password = credentials('TF_VAR_password')
+            OS_USERNAME = credentials('GITHUB_USER')
+            OS_PASSWORD = credentials('TF_VAR_password')
+            OS_INSECURE = true
+            GITHUB_TOKEN = credentials('GITHUB_TOKEN')
+            ARTIFACTORY_TOKEN = credentials('ARTIFACTORY_TOKEN')
+            FUNCTIONAL_TEST_REPO = "icp-sanity-bats"
+            TERRAFORM_VER = "0.11.13"
+            TARGET = "deploy-power-powervc"
+            TEST_SUITE = "ppc64le"
+            DEPLOY_REPO = "daily"
+
+
+	 }
+    stages {
+        stage('Clone Canary Deployment') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CheckoutOption', timeout: 60], [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 60], [$class: 'RelativeTargetDirectory', relativeTargetDir: 'canary-deployments'], [$class: 'CleanBeforeCheckout']], submoduleCfg: [], userRemoteConfigs: [[ url: 'git@github.ibm.com:ICP-DevOps/canary-deployments.git', credentialsId: 'ibm-github']]])
+            }
+        }
+        stage('Prepare Teraform Template') {
+            steps {
+                script {
+                    try {
+                        sh '''
+                            #!/bin/bash
+                            echo 'Setting-up terraform template file for PowerVM!'
+                            URL="auth_url = \\"https://9.114.192.193:5000/v3/\\""
+                            ZONE="availability_zone = \\"icp_hosts\\""
+                            #2*8 > 16vcpus, 16G
+                            IMAGE="os_image_name = \\"cicd-sles12-sp4-2019-04-15-ppc64le\\""
+                            MASTER="master = { nodes = \\"1\\", size = \\"8702cf66-7356-4693-b468-7d5b0457c714\\"}"
+                            WORKER="worker = { nodes = \\"1\\", size = \\"c8eb8bef-5103-42d5-a4f0-a4947008e27d\\"}"
+                            MANAGER="manager = { nodes = \\"1\\", size = \\"8702cf66-7356-4693-b468-7d5b0457c714\\"}"
+                            
+                            cd ${WORKSPACE}/canary-deployments
+                            # Updating tempate file with env variables
+                            [ ! -z "${URL}" ] && grep -q '^auth_url =' .deploy-power-powervc.tfvars.template && sed -i "s|^auth_url =.*$|${URL}|g" .deploy-power-powervc.tfvars.template || sed -i "4s|$|\\n${URL}|" .deploy-power-powervc.tfvars.template
+                            [ ! -z "${ZONE}" ] && grep -q '^availability_zone =' .deploy-power-powervc.tfvars.template && sed -i "s|^availability_zone =.*$|${ZONE}|g" .deploy-power-powervc.tfvars.template || sed -i "4s|$|\\n${ZONE}|" .deploy-power-powervc.tfvars.template
+                            [ ! -z "${IMAGE}" ] && grep -q '^os_image_name =' .deploy-power-powervc.tfvars.template && sed -i "s|^os_image_name =.*$|${IMAGE}|g" .deploy-power-powervc.tfvars.template || sed -i "4s|$|\\n${IMAGE}|" .deploy-power-powervc.tfvars.template
+                            [ ! -z "${WORKER}" ] && grep -q '^worker =' .deploy-power-powervc.tfvars.template && sed -i "s|^worker = .*$|${WORKER}|g" .deploy-power-powervc.tfvars.template || sed -i "4s|$|\\n${WORKER}|" .deploy-power-powervc.tfvars.template
+                            [ ! -z "${MANAGER}" ] && grep -q '^manager =' .deploy-power-powervc.tfvars.template && sed -i "s|^manager =.*$|${MANAGER}|g" .deploy-power-powervc.tfvars.template || sed -i "4s|$|\\n${MANAGER}|" .deploy-power-powervc.tfvars.template
+                            [ ! -z "${MASTER}" ] && grep -q '^master =' .deploy-power-powervc.tfvars.template && sed -i "s|^master = .*$|${MASTER}|g" .deploy-power-powervc.tfvars.template || sed -i "4s|$|\\n${MASTER}|" .deploy-power-powervc.tfvars.template
+                            '''
+                        }
+                    catch (err) {
+                        sh '''
+                        echo 'Cleaning the partially setup env!'
+
+                        cd ${WORKSPACE}/canary-deployments
+                        make $TARGET:clean
+                        '''
+                        throw err
+                    }
+                }
+            }
+        }
+        stage('Initilize Environment') {
+            steps {
+                script {
+                    try {
+                        sh '''
+                        echo 'Setting up the kubectl environment!'
+
+                        cd ${WORKSPACE}/canary-deployments
+                        make init
+                        make keys
+                        make setup-dependencies
+                        '''
+                        }
+                    catch (err) {
+                        sh '''
+                        echo 'Cleaning the failed ICP env!'
+                        cd ${WORKSPACE}/canary-deployments
+
+                        make $TARGET:clean
+                        '''
+                        throw err
+                    }
+                }
+            }
+        }
+        stage('Deploy ICP Cluster') {
+            steps {
+                script {
+                    try {
+                        sh '''
+                        echo 'Setting up the kubectl environment!'
+
+                        cd ${WORKSPACE}/canary-deployments
+                        make $TARGET
+                        sleep 60
+                        '''
+                        }
+                    catch (err) {
+                        sh '''
+                        echo 'Cleaning up partially deployed ICP cluster !'
+                        cd ${WORKSPACE}/canary-deployments
+                        make $TARGET:clean
+                        '''
+                        throw err
+                    }
+                }
+            }
+        }
+        stage('Setup Kubectl') {
+            steps {
+                script {
+                    try {
+                        sh '''
+                        echo 'Setting up the kubectl environment!'
+
+                        cd ${WORKSPACE}/canary-deployments
+                        make $TARGET:config
+                        '''
+                        }
+                    catch (err) {
+                        sh '''
+                        echo 'Cleaning the ICP env!'
+
+                        cd ${WORKSPACE}/canary-deployments
+                        make $TARGET:clean
+                        '''
+                        throw err
+                    }
+                }
+            }
+        }
+        stage('Run SERT Test') {
+            steps {
+                script {
+                    try {
+                        sh '''
+                        echo 'Running SERT test!'
+                        cd ${WORKSPACE}/canary-deployments
+
+                        make run-functional-tests
+                        '''
+                        }
+                    finally  {
+                        sh '''
+                        echo 'Tearing off the cluster!'
+                        cd ${WORKSPACE}/canary-deployments
+
+                        make $TARGET:clean
+                        '''
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+            notifyBySlack(currentBuild.result)
+        }
+    }
+}

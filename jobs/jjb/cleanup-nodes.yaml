@@ -1,0 +1,41 @@
+---
+- job:
+    name: cleanup-nodes
+    project-type: pipeline
+    triggers:
+      - timed: '@daily'
+    sandbox: false
+    dsl: |
+      def branches = [:]
+      def names = nodeNames()
+      for (int i=0; i<names.size(); ++i) {
+        def nodeName = names[i];
+        // Into each branch we put the pipeline code we want to execute
+        branches["node_" + nodeName] = {
+          node(nodeName) {
+            echo "Triggering on " + nodeName
+            stage("Cleanup docker images") {
+                sh '''
+                  if [ ! $(docker ps -q) ];then
+                      docker ps -q | xargs --no-run-if-empty docker stop || true
+                      docker ps -q -a | xargs --no-run-if-empty docker rm  --volumes || true
+                      docker volume ls -q | xargs --no-run-if-empty docker volume rm || true
+                      docker images -a -q | xargs --no-run-if-empty docker rmi || true
+                      docker system prune -a -f
+                  fi
+                '''
+            }
+          }
+        }
+      }
+
+      node("master"){
+      // Now we trigger all branches
+      parallel branches
+      }
+
+      // This method collects a list of Node names from the current Jenkins instance
+      @NonCPS
+      def nodeNames() {
+        return jenkins.model.Jenkins.instance.nodes.findAll { it.computer.online }.collect { node -> node.name }
+      }

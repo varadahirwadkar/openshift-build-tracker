@@ -1,0 +1,16 @@
+---
+- job:
+    name: {{ JOB_NAME }}
+    project-type: pipeline
+    triggers:
+      - timed: '@daily'
+    sandbox: true
+    pipeline-scm:
+      scm:
+        - git:
+            url: git@github.ibm.com:powercloud-cicd/test-icp-daily.git
+            branches:
+              - master
+            credentials-id: ibm-github
+            clean: true
+      script-path: {{ JENKINS_FILE }}
