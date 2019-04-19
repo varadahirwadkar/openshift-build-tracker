@@ -67,11 +67,9 @@ pipeline {
                         }
                     catch (err) {
                         sh '''
-                        echo 'Cleaning the partially setup env!'
-
-                        cd ${WORKSPACE}/canary-deployments
-                        make $TARGET:clean
+                        echo 'Error ! Template prepration failed !'
                         '''
+                        artifactoryandclean()
                         throw err
                     }
                 }
@@ -81,11 +79,11 @@ pipeline {
             steps {
                 script {
                     ansiColor('xterm') {
-                        echo 'something that outputs ansi colored stuff'
+                        echo ""
                     }
                     try {
                         sh '''
-                        echo 'Setting up the kubectl environment!'
+                        echo 'Initializing supporting repos and keys !'
 
                         cd ${WORKSPACE}/canary-deployments
                         make init
@@ -95,11 +93,9 @@ pipeline {
                         }
                     catch (err) {
                         sh '''
-                        echo 'Cleaning the failed ICP env!'
-                        cd ${WORKSPACE}/canary-deployments
-
-                        make $TARGET:clean
+                            echo 'Error ! ENV setup failed!'
                         '''
+                        artifactoryandclean()
                         throw err
                     }
                 }
@@ -109,11 +105,11 @@ pipeline {
             steps {
                 script {
                     ansiColor('xterm') {
-                        echo 'something that outputs ansi colored stuff'
+                        echo ""
                     }
                     try {
                         sh '''
-                        echo 'Setting up the kubectl environment!'
+                        echo 'Deploying Cluster!'
 
                         cd ${WORKSPACE}/canary-deployments
                         make $TARGET
@@ -122,10 +118,9 @@ pipeline {
                         }
                     catch (err) {
                         sh '''
-                        echo 'Cleaning up partially deployed ICP cluster !'
-                        cd ${WORKSPACE}/canary-deployments
-                        make $TARGET:clean
+                        echo 'Error ! Tearing off the cluster !'
                         '''
+                        artifactoryandclean()
                         throw err
                     }
                 }
@@ -135,11 +130,11 @@ pipeline {
             steps {
                 script {
                     ansiColor('xterm') {
-                        echo 'something that outputs ansi colored stuff'
+                        echo ""
                     }
                     try {
                         sh '''
-                        echo 'Setting up the kubectl environment!'
+                        echo 'Setting up the kubectl!'
 
                         cd ${WORKSPACE}/canary-deployments
                         make $TARGET:config
@@ -147,11 +142,9 @@ pipeline {
                         }
                     catch (err) {
                         sh '''
-                        echo 'Cleaning the ICP env!'
-
-                        cd ${WORKSPACE}/canary-deployments
-                        make $TARGET:clean
+                        echo 'Error ! Tearing off the cluster !'
                         '''
+                        artifactoryandclean()
                         throw err
                     }
                 }
@@ -161,7 +154,7 @@ pipeline {
             steps {
                 script {
                     ansiColor('xterm') {
-                        echo 'something that outputs ansi colored stuff'
+                        echo ""
                     }
                     try {
                         sh '''
@@ -171,13 +164,11 @@ pipeline {
                         make run-functional-tests
                         '''
                         }
-                    finally  {
+                    finally {
                         sh '''
-                        echo 'Tearing off the cluster!'
-                        cd ${WORKSPACE}/canary-deployments
-
-                        make $TARGET:clean
+                        echo ' SERT Test Completed '
                         '''
+                        artifactoryandclean()
                     }
                 }
             }
@@ -185,8 +176,21 @@ pipeline {
     }
     post {
         always {
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/systeminfo.txt.tar.gz', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/cluster.tar.gz', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/cluster/config.yaml', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/deploy-power-powervc.tfvars.template', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/deploy-power-powervc.tfvars', fingerprint: true, onlyIfSuccessful: false
             cleanWs()
             notifyBySlack(currentBuild.result)
         }
     }
+}
+void artifactoryandclean()
+{
+    sh '''
+    sh ${WORKSPACE}/${PROJECTNAME}/hack/capture_artifacts.sh
+    cd ${WORKSPACE}/canary-deployments
+    make $TARGET:clean
+    '''
 }
