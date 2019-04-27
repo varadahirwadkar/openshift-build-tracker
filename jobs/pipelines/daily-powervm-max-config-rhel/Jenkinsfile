@@ -48,7 +48,7 @@ pipeline {
                             #!/bin/bash
                             echo 'Setting-up terraform template file for PowerVM!'
                             URL="auth_url = \\"https://9.114.192.193:5000/v3/\\""
-                            ZONE="availability_zone = \\"icp_hosts\\""
+                            ZONE="availability_zone = \\"p9_pvm\\""
                             # 16VP-> 128cpus, 64G 
                             IMAGE="os_image_name = \\"cicd-rhel7.6-alt-2019-04-04-ppc64le\\""
                             MASTER="master = { nodes = \\"1\\", size = \\"855a12ea-7cec-43e3-9331-f3ea054a3e2f\\"}"

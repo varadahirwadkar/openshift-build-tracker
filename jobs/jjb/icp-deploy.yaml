@@ -87,7 +87,7 @@
             then
                 echo "PowerVM"
                 URL="auth_url = \"https://9.114.192.193:5000/v3/\""
-                ZONE="availability_zone = \"icp_hosts\""
+                ZONE="availability_zone = \"p9_pvm\""
                 case "$Distribution" in
                     RHEL7.6-ALT)
                         IMAGE="os_image_name = \"cicd-rhel7.6-alt-2019-04-04-ppc64le\""
