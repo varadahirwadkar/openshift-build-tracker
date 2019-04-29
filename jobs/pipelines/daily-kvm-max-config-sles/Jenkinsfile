@@ -41,7 +41,7 @@ pipeline {
             OS_TENANT_NAME="ibm-default"
             OS_USER_DOMAIN_NAME="default"
 
-            VIR_CHOSE = "PowerVM"
+            VIR_CHOSE = "KVM"
             HARDWARE_CHOSE="P9"
             DISTRO_CHOSE = "SLES12SP4"
             DEPLOY_REPO = "daily"

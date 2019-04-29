@@ -1,4 +1,12 @@
 @Library('pcloud-jenkins-library') _
+//Define global variables
+def AUTH_URL
+def ZONE
+def IMAGE
+def MASTER
+def WORKER
+def MANAGER
+def VA
 
 pipeline {
     agent {
@@ -12,6 +20,7 @@ pipeline {
         cron('H H * * *')
     }
         environment {
+            //users and credentials. All must be defined in Jenkins Credentials
             GITHUB_USER = credentials('GITHUB_USER')
             TF_VAR_user_name = credentials('GITHUB_USER')
             DOCKER_USER = credentials('GITHUB_USER')
@@ -23,15 +32,35 @@ pipeline {
             OS_INSECURE = true
             GITHUB_TOKEN = credentials('GITHUB_TOKEN')
             ARTIFACTORY_TOKEN = credentials('ARTIFACTORY_TOKEN')
+
+            //Env constants
             FUNCTIONAL_TEST_REPO = "icp-sanity-bats"
             TERRAFORM_VER = "0.11.13"
             TARGET = "deploy-power-powervc"
             TEST_SUITE = "ppc64le"
+            OS_IDENTITY_API_VERSION='3'
+            OS_TENANT_NAME="ibm-default"
+            OS_USER_DOMAIN_NAME="default"
+
+            VIR_CHOSE = "KVM"
+            HARDWARE_CHOSE="P9"
+            DISTRO_CHOSE = "RHEL7.6-ALT"
             DEPLOY_REPO = "daily"
+            ICP_ADDITIONAL_CONFIG = ""
+            SERVER_CONFIG = "Max"
+            boolean DEPLOY_VA = false
+            boolean DEPLOY_MANAGER = true
+            boolean DEPLOY_WORKER = true
+            TIMEOUT = "0"
+            TERMPLATE_FILE = ".deploy-power-powervc.tfvars.template"
 
-
+            //Removing carriage return from  ICP additional Configuration
+            CONFIG=sh (returnStdout: true, script: "echo ${ICP_ADDITIONAL_CONFIG}|tr '\n' ' '")
+            CONF = "'${CONFIG}'"
 	 }
+
     stages {
+        //Checkout the canary-deployment git repo
         stage('Clone Canary Deployment') {
             steps {
                 checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CheckoutOption', timeout: 60], [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 60], [$class: 'RelativeTargetDirectory', relativeTargetDir: 'canary-deployments'], [$class: 'CleanBeforeCheckout']], submoduleCfg: [], userRemoteConfigs: [[ url: 'git@github.ibm.com:ICP-DevOps/canary-deployments.git', credentialsId: 'ibm-github']]])
@@ -41,37 +70,43 @@ pipeline {
             steps {
                 script {
                     ansiColor('xterm') {
-                        echo 'something that outputs ansi colored stuff'
+                        echo ""
                     }
-                    try {
-                        sh '''
-                            #!/bin/bash
-                            echo 'Setting-up terraform template file for PowerVM!'
-                            URL="auth_url = \\"https://9.114.192.184:5000/v3/\\""
-                            ZONE="availability_zone = \\"p9_kvm\\""
-                            #16*8 > 128vcpus, 64G
-                            IMAGE="os_image_name = \\"cicd-rhel7.6-alt-2019-03-22-ppc64le\\""
-                            MASTER="master = { nodes = \\"1\\", size = \\"bc1f2ed2-b8aa-4286-bd8a-14c1ce28f744\\"}"
-                            WORKER="worker = { nodes = \\"1\\", size = \\"a3a98af5-23d4-4cec-8c03-b0d9ebdaa508\\"}"
-                            MANAGER="manager = { nodes = \\"1\\", size = \\"bc1f2ed2-b8aa-4286-bd8a-14c1ce28f744\\"}"
-                            
-                            cd ${WORKSPACE}/canary-deployments
-                            # Updating tempate file with env variables
-                            [ ! -z "${URL}" ] && grep -q '^auth_url =' .deploy-power-powervc.tfvars.template && sed -i "s|^auth_url =.*$|${URL}|g" .deploy-power-powervc.tfvars.template || sed -i "4s|$|\\n${URL}|" .deploy-power-powervc.tfvars.template
-                            [ ! -z "${ZONE}" ] && grep -q '^availability_zone =' .deploy-power-powervc.tfvars.template && sed -i "s|^availability_zone =.*$|${ZONE}|g" .deploy-power-powervc.tfvars.template || sed -i "4s|$|\\n${ZONE}|" .deploy-power-powervc.tfvars.template
-                            [ ! -z "${IMAGE}" ] && grep -q '^os_image_name =' .deploy-power-powervc.tfvars.template && sed -i "s|^os_image_name =.*$|${IMAGE}|g" .deploy-power-powervc.tfvars.template || sed -i "4s|$|\\n${IMAGE}|" .deploy-power-powervc.tfvars.template
-                            [ ! -z "${WORKER}" ] && grep -q '^worker =' .deploy-power-powervc.tfvars.template && sed -i "s|^worker = .*$|${WORKER}|g" .deploy-power-powervc.tfvars.template || sed -i "4s|$|\\n${WORKER}|" .deploy-power-powervc.tfvars.template
-                            [ ! -z "${MANAGER}" ] && grep -q '^manager =' .deploy-power-powervc.tfvars.template && sed -i "s|^manager =.*$|${MANAGER}|g" .deploy-power-powervc.tfvars.template || sed -i "4s|$|\\n${MANAGER}|" .deploy-power-powervc.tfvars.template
-                            [ ! -z "${MASTER}" ] && grep -q '^master =' .deploy-power-powervc.tfvars.template && sed -i "s|^master = .*$|${MASTER}|g" .deploy-power-powervc.tfvars.template || sed -i "4s|$|\\n${MASTER}|" .deploy-power-powervc.tfvars.template
-                            '''
-                        }
-                    catch (err) {
-                        sh '''
-                        echo 'Cleaning the partially setup env!'
+                    try
+                    {
 
-                        cd ${WORKSPACE}/canary-deployments
-                        make $TARGET:clean
-                        '''
+                        echo 'Setting-up terraform template file for Max Config KVM!'
+                        AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/kvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
+                        ZONE=getZone(env.VIR_CHOSE, HARDWARE_CHOSE )
+                        if ("${ZONE}" == null)
+                        {
+                            echo "Requested zone could not find"
+                            error('Requested zone could not find')
+                        }
+                        IMAGE=getTheImage(AUTH_URL, env.DISTRO_CHOSE )
+                        if ("${IMAGE}" == "")
+                        {
+                            echo "Requested image could not find in ${AUTH_URL}"
+                            error('Requested image could not find')
+
+                        }
+                        //16*8 > 128vcpus, 64G
+                        MASTER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
+                        if ("${MASTER}" == null)
+                        {
+                            echo "Requested template could not find"
+                            error('Requested zone could not find')
+                        }
+                        MANAGER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
+                        WORKER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
+                        VA=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
+                        // Updating tempate file with env variables
+                        updateTemplate(AUTH_URL, ZONE, IMAGE, MASTER, WORKER, MANAGER, VA )
+                        }
+                    catch (err)
+                    {
+                        echo 'Error ! Template prepration failed !'
+                        getArtifactoryAndClean(AUTH_URL)
                         throw err
                     }
                 }
@@ -81,11 +116,11 @@ pipeline {
             steps {
                 script {
                     ansiColor('xterm') {
-                        echo 'something that outputs ansi colored stuff'
+                        echo ""
                     }
                     try {
                         sh '''
-                        echo 'Setting up the kubectl environment!'
+                        echo 'Initializing supporting repos and keys !'
 
                         cd ${WORKSPACE}/canary-deployments
                         make init
@@ -94,12 +129,8 @@ pipeline {
                         '''
                         }
                     catch (err) {
-                        sh '''
-                        echo 'Cleaning the failed ICP env!'
-                        cd ${WORKSPACE}/canary-deployments
-
-                        make $TARGET:clean
-                        '''
+                        echo 'Error ! ENV setup failed!'
+                        getArtifactoryAndClean(AUTH_URL)
                         throw err
                     }
                 }
@@ -109,11 +140,11 @@ pipeline {
             steps {
                 script {
                     ansiColor('xterm') {
-                        echo 'something that outputs ansi colored stuff'
+                        echo ""
                     }
                     try {
                         sh '''
-                        echo 'Setting up the kubectl environment!'
+                        echo 'Deploying Cluster!'
 
                         cd ${WORKSPACE}/canary-deployments
                         make $TARGET
@@ -121,11 +152,8 @@ pipeline {
                         '''
                         }
                     catch (err) {
-                        sh '''
-                        echo 'Cleaning up partially deployed ICP cluster !'
-                        cd ${WORKSPACE}/canary-deployments
-                        make $TARGET:clean
-                        '''
+                        echo 'Error ! Tearing off the cluster !'
+                        getArtifactoryAndClean(AUTH_URL)
                         throw err
                     }
                 }
@@ -135,23 +163,19 @@ pipeline {
             steps {
                 script {
                     ansiColor('xterm') {
-                        echo 'something that outputs ansi colored stuff'
+                        echo ""
                     }
                     try {
                         sh '''
-                        echo 'Setting up the kubectl environment!'
+                        echo 'Setting up the kubectl!'
 
                         cd ${WORKSPACE}/canary-deployments
                         make $TARGET:config
                         '''
                         }
                     catch (err) {
-                        sh '''
-                        echo 'Cleaning the ICP env!'
-
-                        cd ${WORKSPACE}/canary-deployments
-                        make $TARGET:clean
-                        '''
+                        echo 'Error ! Tearing off the cluster !'
+                        getArtifactoryAndClean(AUTH_URL)
                         throw err
                     }
                 }
@@ -161,7 +185,7 @@ pipeline {
             steps {
                 script {
                     ansiColor('xterm') {
-                        echo 'something that outputs ansi colored stuff'
+                        echo ""
                     }
                     try {
                         sh '''
@@ -171,13 +195,11 @@ pipeline {
                         make run-functional-tests
                         '''
                         }
-                    finally  {
-                        sh '''
-                        echo 'Tearing off the cluster!'
-                        cd ${WORKSPACE}/canary-deployments
-
-                        make $TARGET:clean
-                        '''
+                    finally {
+                        echo ' SERT Test Completed '
+                        echo "HOLDING THE CLUSTER TEAR DOWN FOR ${TIMEOUT} SECONDS"
+                        sleep TIMEOUT.toInteger()
+                        getArtifactoryAndClean(AUTH_URL)
                     }
                 }
             }
@@ -185,6 +207,11 @@ pipeline {
     }
     post {
         always {
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/systeminfo.txt.tar.gz', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/cluster.tar.gz', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/cluster/config.yaml', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/deploy-power-powervc.tfvars.template', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/deploy-power-powervc.tfvars', fingerprint: true, onlyIfSuccessful: false
             cleanWs()
             notifyBySlack(currentBuild.result)
         }
