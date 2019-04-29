@@ -1,0 +1,383 @@
+@Library('pcloud-jenkins-library') _
+
+//Get Infra and OS from user
+properties([
+    parameters([
+       [$class: 'ChoiceParameter', 
+            choiceType: 'PT_SINGLE_SELECT', 
+            description: 'Select the Operating System from the Dropdown List', 
+            filterLength: 1, 
+            filterable: true, 
+            name: 'Virtualization',
+            randomName: 'choice-parameter-5631314439613978', 
+            script: [
+                $class: 'GroovyScript', 
+                fallbackScript: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        'return[\'Could not get Env\']'
+                ], 
+                script: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        'return["KVM","PowerVM"]'
+                ]
+            ]
+        ], 
+        [$class: 'CascadeChoiceParameter', 
+            choiceType: 'PT_SINGLE_SELECT', 
+            description: 'Select the Server from the Dropdown List', 
+            filterLength: 1, 
+            filterable: true, 
+            name: 'Hardware', 
+            randomName: 'choice-parameter-5631314456178619', 
+            referencedParameters: 'Virtualization', 
+            script: [
+                $class: 'GroovyScript', 
+                fallbackScript: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        'return[\'Could not get Environment from Env Param\']'
+                ], 
+                script: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        ''' if (Virtualization.equals("KVM")){
+                                return["P9","P8"]
+                            }
+                            else if(Virtualization.equals("PowerVM")){
+                                return["P9","P8"]
+                            }
+                        '''
+                ]
+            ]
+        ],
+        [$class: 'CascadeChoiceParameter', 
+            choiceType: 'PT_SINGLE_SELECT', 
+            description: 'Select the Server from the Dropdown List', 
+            filterLength: 1, 
+            filterable: true, 
+            name: 'Operatingsystem', 
+            randomName: 'choice-parameter-5631314456178610', 
+            referencedParameters: 'Hardware, Virtualization', 
+            script: [
+                $class: 'GroovyScript', 
+                fallbackScript: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        'return[\'Could not get Environment from Env Param\']'
+                ], 
+                script: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        ''' if (Hardware.equals("P8") && Virtualization.equals("KVM")){
+                                return["RHEL7.6","RHEL7.5","UBUNTU18.04","UBUNTU16.04","SLES12SP4","SLES12SP3"]
+                            }
+                            else if(Hardware.equals("P9") && Virtualization.equals("PowerVM")){
+                                return["RHEL7.6-ALT","RHEL7.6","RHEL7.5-ALT","RHEL7.5","SLES12SP4","SLES12SP3"]
+                            }
+                            else if(Hardware.equals("P9") && Virtualization.equals("KVM")){
+                                return["RHEL7.6-ALT","RHEL7.6","RHEL7.5-ALT","RHEL7.5","SLES12SP4","SLES12SP3","UBUNTU18.04","UBUNTU16.04"]
+                            }
+                            else if(Hardware.equals("P8") && Virtualization.equals("PowerVM")){
+                                return["RHEL7.6","RHEL7.5","SLES12SP4","SLES12SP3"]
+                            }
+                        '''
+                ]
+            ]
+        ]
+    ])
+])
+//Define global variables
+def AUTH_URL
+def ZONE
+def IMAGE
+def MASTER
+def WORKER
+def MANAGER
+def VA
+
+pipeline {
+    agent {
+        dockerfile {
+            dir 'images/terraform'
+            additionalBuildArgs '--force-rm	--no-cache'
+            label 'daily-x86_64'
+        }
+    }
+    parameters {
+        choice(name: 'Build', choices: 'daily\nedge\nstable\nstash\nrelease', description: 'Choose the build')
+        choice(name: 'ServerConfig', choices: 'Min\nMax', description: 'Choose The machine configuration')
+        booleanParam(defaultValue: false, name: 'DeployVA', description: 'Select if you want to Deploy VA node')
+        booleanParam(defaultValue: false, name: 'DeployManager', description: 'Select if you want to Deploy Management node')
+        booleanParam(defaultValue: false, name: 'DeployWorker', description: 'Select if you want to Deploy Worker node')
+        text(name: 'ICPConfig', defaultValue: '', description: 'Paste the additional ICP config in HCL format')
+        string(defaultValue: '0', description: 'Enter time to retain the cluster(in seconds)', name: 'KeepFor')
+    }
+    environment {
+        //users and credentials. All must be defined in Jenkins Credentials
+        GITHUB_USER = credentials('GITHUB_USER')
+        TF_VAR_user_name = credentials('GITHUB_USER')
+        DOCKER_USER = credentials('GITHUB_USER')
+        ARTIFACTORY_USER = credentials('GITHUB_USER')
+        TF_VAR_repo_user = credentials('GITHUB_USER')
+        TF_VAR_password = credentials('TF_VAR_password')
+        OS_USERNAME = credentials('GITHUB_USER')
+        OS_PASSWORD = credentials('TF_VAR_password')
+        OS_INSECURE = true
+        GITHUB_TOKEN = credentials('GITHUB_TOKEN')
+        ARTIFACTORY_TOKEN = credentials('ARTIFACTORY_TOKEN')
+
+        //Env constants
+        FUNCTIONAL_TEST_REPO = "icp-sanity-bats"
+        TERRAFORM_VER = "0.11.13"
+        TARGET = "deploy-power-powervc"
+        TEST_SUITE = "ppc64le"
+        OS_IDENTITY_API_VERSION='3'
+        OS_TENANT_NAME="ibm-default"
+        OS_USER_DOMAIN_NAME="default"
+
+        VIR_CHOSE = "${params.Virtualization}"
+        HARDWARE_CHOSE = "${params.Hardware}"
+        DISTRO_CHOSE = "${params.Operatingsystem}"
+        DEPLOY_REPO = "${params.Build}"
+        ICP_ADDITIONAL_CONFIG = "'${params.ICPConfig}'"
+        SERVER_CONFIG = "${params.ServerConfig}"
+        boolean DEPLOY_VA = "${params.DeployVA}"
+        boolean DEPLOY_MANAGER = "${params.DeployManager}"
+        boolean DEPLOY_WORKER = "${params.DeployWorker}"
+        TIMEOUT = "${params.KeepFor}"
+        TERMPLATE_FILE = ".deploy-power-powervc.tfvars.template"
+
+        //Removing carriage return from  ICP additional Configuration
+        CONFIG=sh (returnStdout: true, script: "echo ${ICP_ADDITIONAL_CONFIG}|tr '\n' ' '")
+        CONF = "'${CONFIG}'"
+	 }
+
+    stages {
+        //Checkout the canary-deployment git repo
+        stage('Clone Canary Deployment') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CheckoutOption', timeout: 60], [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 60], [$class: 'RelativeTargetDirectory', relativeTargetDir: 'canary-deployments'], [$class: 'CleanBeforeCheckout']], submoduleCfg: [], userRemoteConfigs: [[ url: 'git@github.ibm.com:ICP-DevOps/canary-deployments.git', credentialsId: 'ibm-github']]])
+            }
+        }
+        stage('Prepare Teraform Template') {
+            steps {
+                script {
+                    ansiColor('xterm') {
+                        echo ""
+                    }
+                    try
+                    {
+                        if ( env.VIR_CHOSE == "KVM" )
+                        {   
+                            echo 'Setting-up terraform template file for KVM!'
+                            AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/kvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
+                            ZONE=getZone(env.VIR_CHOSE, HARDWARE_CHOSE )
+                            if ("${ZONE}" == null)
+                            {
+                                echo "Requested zone could not find in ${AUTH_URL}"
+                                error('Requested zone could not find')
+                            }
+                            IMAGE=getTheImage(AUTH_URL, env.DISTRO_CHOSE )
+                            if ("${IMAGE}" == "")
+                            {
+                                echo "Requested image could not find in ${AUTH_URL}"
+                                error('Requested image could not find')
+
+                            }
+                            if ( env.SERVER_CONFIG == "Min" )
+                            {
+                                //2*8 > 16vcpus, 16G
+                                MASTER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
+                                if ("${MASTER}" == null)
+                                {
+                                    echo "Requested template could not find"
+                                    error('Requested zone could not find')
+                                }
+                                MANAGER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
+                                WORKER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
+                                VA=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
+                            } 
+                            else  if ( env.SERVER_CONFIG == "Max" )
+                            {
+                                //16*8 > 128vcpus, 64G
+                                MASTER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
+                                if ("${MASTER}" == null)
+                                {
+                                    echo "Requested template could not find"
+                                    error('Requested zone could not find')
+                                }
+                                MANAGER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
+                                WORKER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
+                                VA=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
+                            }
+                        } 
+                        else if ( env.VIR_CHOSE == "PowerVM" )
+                        {
+                            echo 'Setting-up terraform template file for PowerVM!'
+                            AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/pvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
+                            ZONE=getZone(env.VIR_CHOSE, HARDWARE_CHOSE )
+                            if ("${ZONE}" == null)
+                            {
+                                echo "Requested zone could not find in ${AUTH_URL}"
+                                error('Could not find requesed zone')
+                            }
+                            IMAGE=getTheImage(AUTH_URL, env.DISTRO_CHOSE )
+                            if ("${IMAGE}" == "")
+                            {
+                                echo "Requested image could not find in ${AUTH_URL}"
+                                error('Could not find requesed image')
+
+                            }
+                            if ( env.SERVER_CONFIG == "Min" )
+                            {
+                                //2*8 > 16vcpus, 16G
+                                MASTER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
+                                if ("${MASTER}" == null)
+                                {
+                                    echo "Requested template could not find"
+                                    error('Requested zone could not find')
+                                }
+                                MANAGER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
+                                WORKER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
+                                VA=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
+                            }
+                            else if ( env.SERVER_CONFIG == "Max" )
+                            {
+                                //2*8 > 128vcpus, 64G
+                                MASTER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
+                                if ("${MASTER}" == null)
+                                {
+                                    echo "Requested template could not find"
+                                    error('Requested zone could not find')
+                                }
+                                MANAGER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
+                                WORKER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
+                                VA=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
+                            }
+                        }
+                        // Updating tempate file with env variables
+                        updateTemplate(AUTH_URL, ZONE, IMAGE, MASTER, WORKER, MANAGER, VA )
+                        //sh " cd ${WORKSPACE}/canary-deployments && cat \"${TERMPLATE_FILE}\""
+                    }
+                    catch (err) 
+                    {
+                        echo 'Error ! Template prepration failed !'
+                        getArtifactoryAndClean(AUTH_URL)
+                        throw err
+                    }
+                }
+            }
+        }
+        stage('Initilize Environment') {
+            steps {
+                script {
+                    ansiColor('xterm') {
+                        echo ""
+                    }
+                    try {
+                        sh '''
+                        echo 'Initializing supporting repos and keys !'
+
+                        cd ${WORKSPACE}/canary-deployments
+                        make init
+                        make keys
+                        make setup-dependencies
+                        '''
+                        }
+                    catch (err) {
+                        echo 'Error ! ENV setup failed!'
+                        getArtifactoryAndClean(AUTH_URL)
+                        throw err
+                    }
+                }
+            }
+        }
+        stage('Deploy ICP Cluster') {
+            steps {
+                script {
+                    ansiColor('xterm') {
+                        echo ""
+                    }
+                    try {
+                        sh '''
+                        echo 'Deploying Cluster!'
+
+                        cd ${WORKSPACE}/canary-deployments
+                        make $TARGET
+                        sleep 60
+                        '''
+                        }
+                    catch (err) {
+                        echo 'Error ! Tearing off the cluster !'
+                        getArtifactoryAndClean(AUTH_URL)
+                        throw err
+                    }
+                }
+            }
+        }
+        stage('Setup Kubectl') {
+            steps {
+                script {
+                    ansiColor('xterm') {
+                        echo ""
+                    }
+                    try {
+                        sh '''
+                        echo 'Setting up the kubectl!'
+
+                        cd ${WORKSPACE}/canary-deployments
+                        make $TARGET:config
+                        '''
+                        }
+                    catch (err) {
+                        echo 'Error ! Tearing off the cluster !'
+                        getArtifactoryAndClean(AUTH_URL)
+                        throw err
+                    }
+                }
+            }
+        }
+        stage('Run SERT Test') {
+            steps {
+                script {
+                    ansiColor('xterm') {
+                        echo ""
+                    }
+                    try {
+                        sh '''
+                        echo 'Running SERT test!'
+                        cd ${WORKSPACE}/canary-deployments
+
+                        make run-functional-tests
+                        '''
+                        }
+                    finally {
+                        echo ' SERT Test Completed '
+                        echo "HOLDING THE CLUSTER TEAR DOWN FOR ${TIMEOUT} SECONDS"
+                        sleep TIMEOUT.toInteger()
+                        getArtifactoryAndClean(AUTH_URL)
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/systeminfo.txt.tar.gz', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/cluster.tar.gz', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/cluster/config.yaml', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/deploy-power-powervc.tfvars.template', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/deploy-power-powervc.tfvars', fingerprint: true, onlyIfSuccessful: false
+            cleanWs()
+            notifyBySlack(currentBuild.result)
+        }
+    }
+}

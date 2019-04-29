@@ -20,5 +20,6 @@ RUN apt-get update && apt install --yes nodejs imagemagick gifsicle \
         python-selenium \
 	sudo \
     && rm -rf /var/lib/apt/lists/*
+RUN pip install python-openstackclient
 RUN ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
 

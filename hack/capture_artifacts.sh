@@ -23,7 +23,7 @@
         sed -i "s|docker_password.*$|docker_password: ************|g" deploy-power-powervc.tfvars
         sed -i "s|header.*'X-JFrog-Art-Api.*$|header*.'X-JFrog-Art-Api: ************|g" deploy-power-powervc.tfvars
     fi
-    MASTER_NODE=$(make terraform:output TERRAFORM_DIR=.deploy-power-powervc TERRAFORM_OUTPUT_VAR=master-node)
+    MASTER_NODE=$(make terraform:output TERRAFORM_DIR=.deploy-power-powervc TERRAFORM_OUTPUT_VAR=master-node || true)
     [ $? -ne 0 ] && exit 1;
     if [ ! -z "${MASTER_NODE}" ]; then
         ssh -q -i id_rsa -o StrictHostKeyChecking=no root@${MASTER_NODE} exit
