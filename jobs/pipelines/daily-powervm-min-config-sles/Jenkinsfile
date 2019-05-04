@@ -75,7 +75,7 @@ pipeline {
                     {
 
                         echo 'Setting-up terraform template file for Max Config KVM!'
-                        AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/kvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
+                        AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/pvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
                         ZONE=getZone(env.VIR_CHOSE, HARDWARE_CHOSE )
                         if ("${ZONE}" == null)
                         {
