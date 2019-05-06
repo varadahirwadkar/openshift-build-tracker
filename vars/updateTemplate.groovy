@@ -1,10 +1,11 @@
-def call(String authurl, String pvczone, String distroimage, String mast, String work, String manger, String vul)
+def call(String authurl, String pvczone, String distroimage, String mast, String work, String manger, String vul, String disto)
 {
     // Updating tempate file with env variables
     sh " cd ${WORKSPACE}/canary-deployments && [ ! -z authurl ] && grep -q '^auth_url *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^auth_url *=.*\$|auth_url = \\\"\"'${authurl}'\"\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nauth_url = \\\"\"'${authurl}'\"\\\"|g\" \"${TERMPLATE_FILE}\""
     sh " cd ${WORKSPACE}/canary-deployments && [ ! -z pvczone ] && grep -q '^availability_zone *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^availability_zone *=.*\$|availability_zone = \\\"\"'${pvczone}'\"\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\navailability_zone = \\\"\"'${pvczone}'\"\\\"|g\" \"${TERMPLATE_FILE}\""
     sh " cd ${WORKSPACE}/canary-deployments && [ ! -z distroimage ] && grep -q '^os_image_name *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^os_image_name *=.*\$|os_image_name = \\\"\"${distroimage}\"\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nos_image_name = \\\"\"${distroimage}\"\\\"|g\" \"${TERMPLATE_FILE}\""
     sh " cd ${WORKSPACE}/canary-deployments && grep -q '^master =' \"${TERMPLATE_FILE}\" && sed -i \"s|^master *=.*\$|master = \"'${mast}'\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nmaster = \"'${mast}'\"|g\" \"${TERMPLATE_FILE}\""
+    sh " cd ${WORKSPACE}/canary-deployments && [ ! -z distro ] && grep -q '^image_distro *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^image_distro *=.*\$|image_distro = \\\"\"${distro}\"\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nimage_distro = \\\"\"${distro}\"\\\"|g\" \"${TERMPLATE_FILE}\""
     if (env.DEPLOY_WORKER == "true")
     {
         sh " cd ${WORKSPACE}/canary-deployments && grep -q '^worker *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^worker =.*\$|worker = \"'${work}'\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nworker = \"'${work}'\"|g\" \"${TERMPLATE_FILE}\""

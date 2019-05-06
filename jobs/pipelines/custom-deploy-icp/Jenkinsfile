@@ -102,6 +102,7 @@ def MASTER
 def WORKER
 def MANAGER
 def VA
+env.DISTRO = ""
 
 pipeline {
     agent {
@@ -266,7 +267,7 @@ pipeline {
                             }
                         }
                         // Updating tempate file with env variables
-                        updateTemplate(AUTH_URL, ZONE, IMAGE, MASTER, WORKER, MANAGER, VA )
+                        updateTemplate(AUTH_URL, ZONE, IMAGE, MASTER, WORKER, MANAGER, VA, env.DISTRO )
                         //sh " cd ${WORKSPACE}/canary-deployments && cat \"${TERMPLATE_FILE}\""
                     }
                     catch (err) 
