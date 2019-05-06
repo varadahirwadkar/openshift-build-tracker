@@ -117,6 +117,7 @@ pipeline {
         booleanParam(defaultValue: false, name: 'DeployVA', description: 'Select if you want to Deploy VA node')
         booleanParam(defaultValue: false, name: 'DeployManager', description: 'Select if you want to Deploy Management node')
         booleanParam(defaultValue: false, name: 'DeployWorker', description: 'Select if you want to Deploy Worker node')
+        booleanParam(defaultValue: false, name: 'SystemTuning', description: 'Select if you want to have system tuning for performance')
         text(name: 'ICPConfig', defaultValue: '', description: 'Paste the additional ICP config in HCL format')
         string(defaultValue: '0', description: 'Enter time to retain the cluster(in seconds)', name: 'KeepFor')
     }
@@ -152,6 +153,7 @@ pipeline {
         boolean DEPLOY_VA = "${params.DeployVA}"
         boolean DEPLOY_MANAGER = "${params.DeployManager}"
         boolean DEPLOY_WORKER = "${params.DeployWorker}"
+        boolean SYSTEM_TUNING = "${params.SystemTuning}"
         TIMEOUT = "${params.KeepFor}"
         TERMPLATE_FILE = ".deploy-power-powervc.tfvars.template"
 

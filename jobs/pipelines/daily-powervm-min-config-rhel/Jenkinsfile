@@ -44,7 +44,7 @@ pipeline {
 
             VIR_CHOSE = "PowerVM"
             HARDWARE_CHOSE="P8"
-            DISTRO_CHOSE = "RHEL7.6-ALT"
+            DISTRO_CHOSE = "RHEL7.6"
             DEPLOY_REPO = "daily"
             ICP_ADDITIONAL_CONFIG = ""
             SERVER_CONFIG = "Min"

@@ -1,4 +1,4 @@
-def call(String authurl, String pvczone, String distroimage, String mast, String work, String manger, String vul)
+def call(String authurl, String pvczone, String distroimage, String mast, String work, String manger, String vul, String tuning)
 {
     // Updating tempate file with env variables
     sh " cd ${WORKSPACE}/canary-deployments && [ ! -z authurl ] && grep -q '^auth_url *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^auth_url *=.*\$|auth_url = \\\"\"'${authurl}'\"\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nauth_url = \\\"\"'${authurl}'\"\\\"|g\" \"${TERMPLATE_FILE}\""
@@ -32,6 +32,10 @@ def call(String authurl, String pvczone, String distroimage, String mast, String
     {
         VA1=sh (returnStdout: true, script: "echo ${vul}|sed \"s|nodes *=.*,|nodes = \\\"0\\\",|g\" |tr '\n' ' '| sed \"s|\\s*\$||g\"")
         sh " cd ${WORKSPACE}/canary-deployments && grep -q '^va *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^va *=.*\$|va = \"'${VA1}'\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nva = \"'${VA1}'\"|g\" \"${TERMPLATE_FILE}\""
+    }
+    else if (env.SYSTEM_TUNING == "false")
+    {
+        sh " cd ${WORKSPACE}/canary-deployments &&  grep -q '^system_tuning *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^system_tuning *=.*\$|system_tuning = \\\"\"disabled\"\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nsystem_tuning = \\\"\"disabled\"\\\"|g\" \"${TERMPLATE_FILE}\""
     }
     if ( conf != null ) {
          sh " cd ${WORKSPACE}/canary-deployments && sed -i \"\$(( \$( wc -l < \"${TERMPLATE_FILE}\")-1))s|\$|\\n\"${CONF}\"|\" \"${TERMPLATE_FILE}\""
