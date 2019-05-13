@@ -128,8 +128,8 @@ pipeline {
         //users and credentials. All must be defined in Jenkins Credentials
         GITHUB_USER = credentials('GITHUB_USER')
         TF_VAR_user_name = credentials('GITHUB_USER')
-        DOCKER_USER = credentials('GITHUB_USER')
-        ARTIFACTORY_USER = credentials('GITHUB_USER')
+        DOCKER_USER = credentials('DOCKER_USER')
+        ARTIFACTORY_USER = credentials('ARTIFACTORY_USER')
         TF_VAR_repo_user = credentials('GITHUB_USER')
         TF_VAR_password = credentials('TF_VAR_password')
         OS_USERNAME = credentials('GITHUB_USER')
