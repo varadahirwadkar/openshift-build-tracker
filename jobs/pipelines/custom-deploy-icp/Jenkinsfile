@@ -3,11 +3,71 @@
 //Get Infra and OS from user
 properties([
     parameters([
+        [$class: 'ChoiceParameter', 
+            choiceType: 'PT_SINGLE_SELECT', 
+            description: 'Select the Build from the Dropdown List', 
+            filterLength: 1, 
+            filterable: true, 
+            name: 'Build',
+            randomName: 'choice-parameter-6631314439613978', 
+            script: [
+                $class: 'GroovyScript', 
+                fallbackScript: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        'return[\'Could not get Env\']'
+                ], 
+                script: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        'return["daily","edge","stash","stable","release"]'
+                ]
+            ]
+        ], 
+
+        [$class: 'CascadeChoiceParameter', 
+            choiceType: 'PT_SINGLE_SELECT', 
+            description: 'Select the version from the Dropdown List', 
+            filterLength: 1, 
+            filterable: false, 
+            name: 'Version', 
+            randomName: 'choice-parameter-7931314456178619', 
+            referencedParameters: 'Build', 
+            script: [
+                $class: 'GroovyScript', 
+                fallbackScript: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        'return[\'Could not get Environment from Env Param\']'
+                ], 
+                script: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        ''' if (Build.equals("edge") || Build.equals("stash")){
+                                return["3.2.0","latest:selected"]
+                            }
+                            else if(Build.equals("release")){
+                                return["latest:selected","3.1.2"]
+                            }
+                            else 
+                            {
+                                return["latest"]
+                            }
+                        '''
+                ]
+            ]
+        ],
+
+
        [$class: 'ChoiceParameter', 
             choiceType: 'PT_SINGLE_SELECT', 
             description: 'Select the Operating System from the Dropdown List', 
             filterLength: 1, 
-            filterable: true, 
+            filterable: false, 
             name: 'Virtualization',
             randomName: 'choice-parameter-5631314439613978', 
             script: [
@@ -30,7 +90,7 @@ properties([
             choiceType: 'PT_SINGLE_SELECT', 
             description: 'Select the Server from the Dropdown List', 
             filterLength: 1, 
-            filterable: true, 
+            filterable: false, 
             name: 'Hardware', 
             randomName: 'choice-parameter-5631314456178619', 
             referencedParameters: 'Virtualization', 
@@ -50,7 +110,7 @@ properties([
                                 return["P9","P8"]
                             }
                             else if(Virtualization.equals("PowerVM")){
-                                return["P9","P8"]
+                                return["P8","P9"]
                             }
                         '''
                 ]
@@ -60,7 +120,7 @@ properties([
             choiceType: 'PT_SINGLE_SELECT', 
             description: 'Select the Server from the Dropdown List', 
             filterLength: 1, 
-            filterable: true, 
+            filterable: false, 
             name: 'Operatingsystem', 
             randomName: 'choice-parameter-5631314456178610', 
             referencedParameters: 'Hardware, Virtualization', 
@@ -102,6 +162,7 @@ def MASTER
 def WORKER
 def MANAGER
 def VA
+def PROXY
 def TIMEOUT_SEC
 def TIMEOUT_MIN
 env.DISTRO = ""
@@ -115,11 +176,13 @@ pipeline {
         }
     }
     parameters {
-        choice(name: 'Build', choices: 'daily\nintegration\nedge\nstable\nstash\nrelease', description: 'Choose the build')
+        //choice(name: 'Build', choices: 'daily\nintegration\nedge\nstable\nstash\nrelease', description: 'Choose the build')
         choice(name: 'ServerConfig', choices: 'Min\nMax', description: 'Choose The machine configuration')
         booleanParam(defaultValue: false, name: 'DeployVA', description: 'Select if you want to Deploy VA node')
         booleanParam(defaultValue: false, name: 'DeployManager', description: 'Select if you want to Deploy Management node')
+        booleanParam(defaultValue: false, name: 'DeployProxy', description: 'Select if you want to Deploy Proxy node')
         booleanParam(defaultValue: false, name: 'DeployWorker', description: 'Select if you want to Deploy Worker node')
+        string(defaultValue: '1', description: 'Enter time(in Minutes) to retain the cluster', name: 'NumOfWorkers')
         booleanParam(defaultValue: false, name: 'SystemTuning', description: 'Select if you want to have system tuning for performance')
         text(name: 'ICPConfig', defaultValue: '', description: 'Paste the additional ICP config in HCL format')
         string(defaultValue: '0', description: 'Enter time(in Minutes) to retain the cluster', name: 'KeepFor')
@@ -151,12 +214,15 @@ pipeline {
         HARDWARE_CHOSE = "${params.Hardware}"
         DISTRO_CHOSE = "${params.Operatingsystem}"
         DEPLOY_REPO = "${params.Build}"
+        DEPLOY_VERSION = "${params.Version}"
         ICP_ADDITIONAL_CONFIG = "'${params.ICPConfig}'"
         SERVER_CONFIG = "${params.ServerConfig}"
         boolean DEPLOY_VA = "${params.DeployVA}"
         boolean DEPLOY_MANAGER = "${params.DeployManager}"
         boolean DEPLOY_WORKER = "${params.DeployWorker}"
         boolean SYSTEM_TUNING = "${params.SystemTuning}"
+        boolean DEPLOY_PROXY = "${params.DeployProxy}"
+        NUM_OF_WORKERS = "${params.NumOfWorkers}"
         TIMEOUT = "${params.KeepFor}"
         TERMPLATE_FILE = ".deploy-power-powervc.tfvars.template"
 
@@ -209,6 +275,7 @@ pipeline {
                                 MANAGER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
                                 WORKER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
                                 VA=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
+                                PROXY=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
                             } 
                             else  if ( env.SERVER_CONFIG == "Max" )
                             {
@@ -222,6 +289,7 @@ pipeline {
                                 MANAGER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
                                 WORKER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
                                 VA=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
+                                PROXY=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
                             }
                         } 
                         else if ( env.VIR_CHOSE == "PowerVM" )
@@ -253,6 +321,7 @@ pipeline {
                                 MANAGER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
                                 WORKER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
                                 VA=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
+                                PROXY=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
                             }
                             else if ( env.SERVER_CONFIG == "Max" )
                             {
@@ -266,10 +335,11 @@ pipeline {
                                 MANAGER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
                                 WORKER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
                                 VA=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
+                                PROXY=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
                             }
                         }
                         // Updating tempate file with env variables
-                        updateTemplate(AUTH_URL, ZONE, IMAGE, MASTER, WORKER, MANAGER, VA, env.DISTRO )
+                        updateTemplate(AUTH_URL, ZONE, IMAGE, MASTER, WORKER, MANAGER, VA, PROXY, env.DISTRO, NUM_OF_WORKERS, DEPLOY_VERSION )
                         //sh " cd ${WORKSPACE}/canary-deployments && cat \"${TERMPLATE_FILE}\""
                     }
                     catch (err) 

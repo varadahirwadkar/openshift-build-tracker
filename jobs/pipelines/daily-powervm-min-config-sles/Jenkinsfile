@@ -6,6 +6,9 @@ def MASTER
 def WORKER
 def MANAGER
 def VA
+def PROXY
+def TIMEOUT_SEC
+def TIMEOUT_MIN
 env.DISTRO = ""
 
 pipeline {
@@ -46,12 +49,15 @@ pipeline {
             HARDWARE_CHOSE="P8"
             DISTRO_CHOSE = "SLES12SP4"
             DEPLOY_REPO = "daily"
+            DEPLOY_VERSION = "latest"
             ICP_ADDITIONAL_CONFIG = ""
             SERVER_CONFIG = "Min"
             boolean SYSTEM_TUNING = false
             boolean DEPLOY_VA = false
             boolean DEPLOY_MANAGER = true
             boolean DEPLOY_WORKER = true
+            boolean DEPLOY_PROXY = false
+            NUM_OF_WORKERS = "1"
             TIMEOUT = "0"
             TERMPLATE_FILE = ".deploy-power-powervc.tfvars.template"
 
@@ -102,7 +108,7 @@ pipeline {
                         WORKER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
                         VA=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
                         // Updating tempate file with env variables
-                        updateTemplate(AUTH_URL, ZONE, IMAGE, MASTER, WORKER, MANAGER, VA, env.DISTRO )
+                        updateTemplate(AUTH_URL, ZONE, IMAGE, MASTER, WORKER, MANAGER, VA, PROXY, env.DISTRO, NUM_OF_WORKERS, DEPLOY_VERSION )
                         }
                     catch (err)
                     {
@@ -198,8 +204,13 @@ pipeline {
                         }
                     finally {
                         echo ' SERT Test Completed '
-                        echo "HOLDING THE CLUSTER TEAR DOWN FOR ${TIMEOUT} SECONDS"
-                        sleep TIMEOUT.toInteger()
+                        TIMEOUT_MIN = TIMEOUT.toInteger()
+                        if ( TIMEOUT_MIN != 0 )
+                        {
+                            TIMEOUT_SEC=TIMEOUT_MIN*60
+                        } 
+                        echo "HOLDING THE CLUSTER TEAR DOWN FOR ${TIMEOUT_MIN} MINUTES"
+                        sleep TIMEOUT_SEC
                         getArtifactoryAndClean(AUTH_URL)
                     }
                 }
