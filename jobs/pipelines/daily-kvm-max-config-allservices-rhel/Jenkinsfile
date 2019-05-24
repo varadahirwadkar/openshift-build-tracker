@@ -108,6 +108,7 @@ pipeline {
                         MANAGER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
                         WORKER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
                         VA=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
+                        PROXY=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
                         // Updating tempate file with env variables
                         updateTemplate(AUTH_URL, ZONE, IMAGE, MASTER, WORKER, MANAGER, VA, PROXY, env.DISTRO, NUM_OF_WORKERS, DEPLOY_VERSION )
                         }
