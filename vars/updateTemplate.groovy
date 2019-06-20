@@ -1,4 +1,4 @@
-def call(String authurl, String pvczone, String distroimage, String mast, String work, String manger, String vul, String prox, String disto, String numofworkers, String version)
+def call(String authurl, String pvczone, String distroimage, String mast, String work, String manger, String vul, String prox, String disto, String numofworkers)
 {
     // Updating tempate file with env variables
     sh " cd ${WORKSPACE}/canary-deployments && [ ! -z authurl ] && grep -q '^auth_url *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^auth_url *=.*\$|auth_url = \\\"\"'${authurl}'\"\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nauth_url = \\\"\"'${authurl}'\"\\\"|g\" \"${TERMPLATE_FILE}\""
@@ -55,9 +55,5 @@ def call(String authurl, String pvczone, String distroimage, String mast, String
     {
         PROXY1=sh (returnStdout: true, script: "echo ${prox}|sed \"s|nodes *=.*,|nodes = \\\"0\\\",|g\" |tr '\n' ' '| sed \"s|\\s*\$||g\"")
         sh " cd ${WORKSPACE}/canary-deployments && grep -q '^proxy *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^proxy *=.*\$|proxy = \"'${PROXY1}'\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nproxy = \"'${PROXY1}'\"|g\" \"${TERMPLATE_FILE}\""
-    }
-    if (env.DEPLOY_VERSION != "latest")
-    {
-        sh " cd ${WORKSPACE}/canary-deployments && grep -q 'icp-inception:latest' \"${TERMPLATE_FILE}\" && sed -i \"s|icp-inception:latest|icp-inception:\"'${version}'\"|g\" \"${TERMPLATE_FILE}\""
     }
 }

@@ -50,7 +50,7 @@ pipeline {
             HARDWARE_CHOSE="P8"
             DISTRO_CHOSE = "RHEL7.6"
             DEPLOY_REPO = "daily"
-            DEPLOY_VERSION = "latest"
+            VERSION = "latest"
             ICP_ADDITIONAL_CONFIG = ""
             SERVER_CONFIG = "Min"
             boolean SYSTEM_TUNING = false
@@ -110,7 +110,7 @@ pipeline {
                         VA=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
                         PROXY=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
                         // Updating tempate file with env variables
-                        updateTemplate(AUTH_URL, ZONE, IMAGE, MASTER, WORKER, MANAGER, VA, PROXY, env.DISTRO, NUM_OF_WORKERS, DEPLOY_VERSION )
+                        updateTemplate(AUTH_URL, ZONE, IMAGE, MASTER, WORKER, MANAGER, VA, PROXY, env.DISTRO, NUM_OF_WORKERS )
                         }
                     catch (err)
                     {

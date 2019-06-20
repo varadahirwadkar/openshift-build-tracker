@@ -214,7 +214,7 @@ pipeline {
         HARDWARE_CHOSE = "${params.Hardware}"
         DISTRO_CHOSE = "${params.Operatingsystem}"
         DEPLOY_REPO = "${params.Build}"
-        DEPLOY_VERSION = "${params.Version}"
+        VERSION = "${params.Version}"
         ICP_ADDITIONAL_CONFIG = "'${params.ICPConfig}'"
         SERVER_CONFIG = "${params.ServerConfig}"
         boolean DEPLOY_VA = "${params.DeployVA}"
@@ -339,7 +339,7 @@ pipeline {
                             }
                         }
                         // Updating tempate file with env variables
-                        updateTemplate(AUTH_URL, ZONE, IMAGE, MASTER, WORKER, MANAGER, VA, PROXY, env.DISTRO, NUM_OF_WORKERS, DEPLOY_VERSION )
+                        updateTemplate(AUTH_URL, ZONE, IMAGE, MASTER, WORKER, MANAGER, VA, PROXY, env.DISTRO, NUM_OF_WORKERS )
                         //sh " cd ${WORKSPACE}/canary-deployments && cat \"${TERMPLATE_FILE}\""
                     }
                     catch (err) 
