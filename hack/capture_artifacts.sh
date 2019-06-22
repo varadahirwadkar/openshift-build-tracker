@@ -6,11 +6,11 @@
         exit 1 
     fi
     # Capturing Teraform template
-    if [ ! -f .deploy-power-powervc.tfvars.template ]; then
-        echo ".deploy-power-powervc.tfvars.template not found!"
+    if [ ! -f ${WORKSPACE}/canary-deployments/templates/.deploy-power-powervc.tfvars.template ]; then
+        echo "${WORKSPACE}/canary-deployments/templates/.deploy-power-powervc.tfvars.template not found!"
         exit 1
     else
-        cp .deploy-power-powervc.tfvars.template deploy-power-powervc.tfvars.template
+        cp ${WORKSPACE}/canary-deployments/templates/.deploy-power-powervc.tfvars.template deploy-power-powervc.tfvars.template
         sed -i "s|ftp3_password.*$|ftp3_password  = ************|g" deploy-power-powervc.tfvars.template
     fi
     if [ ! -f .deploy-power-powervc.tfvars ]; then
@@ -21,7 +21,7 @@
         sed -i "s|ftp3_password.*$|ftp3_password  = ************|g" deploy-power-powervc.tfvars
         sed -i "s|icp_version.*=.*@|icp_version = \"user:************@|g" deploy-power-powervc.tfvars
         sed -i "s|docker_password.*$|docker_password: ************|g" deploy-power-powervc.tfvars
-        sed -i "s|header.*'X-JFrog-Art-Api.*$|header*.'X-JFrog-Art-Api: ************|g" deploy-power-powervc.tfvars
+        sed -i "s|header.*X-JFrog-Art-Api.*$|header.*X-JFrog-Art-Api: ************|g" deploy-power-powervc.tfvars
     fi
     MASTER_NODE=$(make terraform:output TERRAFORM_DIR=.deploy-power-powervc TERRAFORM_OUTPUT_VAR=master-node || true)
     [ $? -ne 0 ] && exit 1;

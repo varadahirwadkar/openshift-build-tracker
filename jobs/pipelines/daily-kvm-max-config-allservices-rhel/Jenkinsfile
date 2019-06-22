@@ -41,7 +41,8 @@ pipeline {
             FUNCTIONAL_TEST_REPO = "icp-sanity-bats"
             TERRAFORM_VER = "0.11.13"
             TARGET = "deploy-power-powervc"
-            TEST_SUITE = "ppc64le"
+            TEST_SUITE = "run-ppc64le-tests"
+            OS = "linux"
             OS_IDENTITY_API_VERSION='3'
             OS_TENANT_NAME="ibm-default"
             OS_USER_DOMAIN_NAME="default"
