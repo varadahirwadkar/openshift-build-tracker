@@ -44,9 +44,6 @@ def call(String authurl, String pvczone, String distroimage, String mast, String
     {
         sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q '^system_tuning *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^system_tuning *=.*\$|system_tuning = \\\"\"enabled\"\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nsystem_tuning = \\\"\"enabled\"\\\"|g\" \"${TERMPLATE_FILE}\""
     }
-    if ( conf != null ) {
-         sh " cd ${WORKSPACE}/canary-deployments/templates && sed -i \"\$(( \$( wc -l < \"${TERMPLATE_FILE}\")-1))s|\$|\\n\"${CONF}\"|\" \"${TERMPLATE_FILE}\""
-    }
     if (env.DEPLOY_PROXY == "true")
     {
         sh " cd ${WORKSPACE}/canary-deployments/templates && grep -q '^proxy *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^proxy *=.*\$|proxy = \"'${prox}'\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nproxy = \"'${prox}'\"|g\" \"${TERMPLATE_FILE}\""
