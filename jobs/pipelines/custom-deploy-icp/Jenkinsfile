@@ -216,7 +216,7 @@ pipeline {
         HARDWARE_CHOSE = "${params.Hardware}"
         DISTRO_CHOSE = "${params.Operatingsystem}"
         DEPLOY_REPO = "${params.Build}"
-        VERSION = "${params.Version}"
+        ICP_VERSION = "${params.Version}"
         ICP_ADDITIONAL_CONFIG = "'${params.ICPConfig}'"
         SERVER_CONFIG = "${params.ServerConfig}"
         boolean DEPLOY_VA = "${params.DeployVA}"

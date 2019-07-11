@@ -11,6 +11,7 @@ def PROXY
 def GLUSTER
 def TIMEOUT_SEC
 def TIMEOUT_MIN
+def CONF
 env.DISTRO = ""
 
 pipeline {
@@ -49,19 +50,19 @@ pipeline {
             OS_TENANT_NAME="ibm-default"
             OS_USER_DOMAIN_NAME="default"
 
-            VIR_CHOSE = "KVM"
-            HARDWARE_CHOSE="P9"
-            DISTRO_CHOSE = "RHEL7.6-ALT"
+            VIR_CHOSE = "PowerVM"
+            HARDWARE_CHOSE="P8"
+            DISTRO_CHOSE = "UBUNTU16.04"
             DEPLOY_REPO = "daily"
             ICP_VERSION = "latest"
             ICP_ADDITIONAL_CONFIG = ""
-            SERVER_CONFIG = "Min"
+            SERVER_CONFIG = "Max"
             boolean SYSTEM_TUNING = false
-            boolean DEPLOY_VA = false
+            boolean DEPLOY_VA = true
             boolean DEPLOY_MANAGER = true
             boolean DEPLOY_WORKER = true
             boolean DEPLOY_PROXY = false
-            boolean ENABLE_GLUSTER = false
+            boolean ENABLE_GLUSTER = true
             NUM_OF_WORKERS = "1"
             TIMEOUT = "0"
             TERMPLATE_FILE = ".deploy-power-powervc.tfvars.template"
@@ -72,6 +73,16 @@ pipeline {
         stage('Clone Canary Deployment') {
             steps {
                 checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CheckoutOption', timeout: 60], [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 60], [$class: 'RelativeTargetDirectory', relativeTargetDir: 'canary-deployments'], [$class: 'CleanBeforeCheckout']], submoduleCfg: [], userRemoteConfigs: [[ url: 'git@github.ibm.com:ICP-DevOps/canary-deployments.git', credentialsId: 'ibm-github']]])
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CheckoutOption', timeout: 60], [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 60], [$class: 'RelativeTargetDirectory', relativeTargetDir: 'installer'], [$class: 'CleanBeforeCheckout']], submoduleCfg: [], userRemoteConfigs: [[ url: 'git@github.ibm.com:IBMPrivateCloud/installer.git', credentialsId: 'ibm-github']]])
+            }
+        }
+        stage('Prepare Config') {
+            steps {
+                script {
+                    echo "Preparing power config file. conf/icp/config.yaml enables all the services and mcm"
+                    sh "cat conf/icp/config.yaml >> ${WORKSPACE}/installer/cluster/power.config.yaml"
+                    sh "/usr/local/bin/yj-linux -yc < ${WORKSPACE}/installer/cluster/power.config.yaml > config.tf"
+                }
             }
         }
         stage('Prepare Teraform Template') {
@@ -83,8 +94,8 @@ pipeline {
                     try
                     {
 
-                        echo 'Setting-up terraform template file for Max Config KVM!'
-                        AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/kvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
+                        echo 'Setting-up terraform template file for Max Config PowerVM!'
+                        AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/pvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
                         ZONE=getZone(env.VIR_CHOSE, HARDWARE_CHOSE )
                         if ("${ZONE}" == null)
                         {
@@ -112,6 +123,7 @@ pipeline {
                         GLUSTER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
                         // Updating tempate file with env variables
                         updateTemplate(AUTH_URL, ZONE, IMAGE, MASTER, WORKER, MANAGER, VA, PROXY, GLUSTER, env.DISTRO, NUM_OF_WORKERS )
+                        sh " cd ${WORKSPACE}/canary-deployments/templates && cat \"${TERMPLATE_FILE}\""
                         }
                     catch (err)
                     {
@@ -228,7 +240,7 @@ pipeline {
             archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/deploy-power-powervc.tfvars.template', fingerprint: true, onlyIfSuccessful: false
             archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/deploy-power-powervc.tfvars', fingerprint: true, onlyIfSuccessful: false
             cleanWs()
-            notifyBySlack(currentBuild.result)
+            notifyBySlack(currentBuild.result) 
         }
     }
 }

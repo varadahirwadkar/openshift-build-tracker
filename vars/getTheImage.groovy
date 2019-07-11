@@ -11,11 +11,11 @@ def call(String auth_url, String distro){
             break
         case "UBUNTU18.04":
             IMAGE=sh(returnStdout: true, script: "openstack --os-auth-url \"${auth_url}\" --insecure image list --format value -c Name | grep -i cicd | grep -i u18.04| tail -n 1|tr '\n' ' ' ").trim()
-            env.DISTRO=""
+            env.DISTRO="ubuntu"
             break
         case "UBUNTU16.04":
             IMAGE=sh(returnStdout: true, script: "openstack --os-auth-url \"${auth_url}\" --insecure image list  --format value -c Name | grep -i cicd | grep -i u16.04| tail -n 1|tr '\n' ' ' ").trim()
-            env.DISTRO=""
+            env.DISTRO="ubuntu"
             break
         case "RHEL7.6-ALT":
             IMAGE=sh(returnStdout: true, script: "openstack  --os-auth-url \"${auth_url}\" --insecure image list  --format value -c Name | grep -i cicd | grep -i rhel7.6-alt| tail -n 1|tr '\n' ' ' ").trim()

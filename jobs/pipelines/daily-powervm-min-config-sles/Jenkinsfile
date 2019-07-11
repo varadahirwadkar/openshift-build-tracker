@@ -7,6 +7,7 @@ def WORKER
 def MANAGER
 def VA
 def PROXY
+def GLUSTER
 def TIMEOUT_SEC
 def TIMEOUT_MIN
 env.DISTRO = ""
@@ -51,7 +52,7 @@ pipeline {
             HARDWARE_CHOSE="P8"
             DISTRO_CHOSE = "SLES12SP4"
             DEPLOY_REPO = "daily"
-            VERSION = "latest"
+            ICP_VERSION = "latest"
             ICP_ADDITIONAL_CONFIG = ""
             SERVER_CONFIG = "Min"
             boolean SYSTEM_TUNING = false
@@ -59,13 +60,10 @@ pipeline {
             boolean DEPLOY_MANAGER = true
             boolean DEPLOY_WORKER = true
             boolean DEPLOY_PROXY = false
+            boolean ENABLE_GLUSTER = false
             NUM_OF_WORKERS = "1"
             TIMEOUT = "0"
             TERMPLATE_FILE = ".deploy-power-powervc.tfvars.template"
-
-            //Removing carriage return from  ICP additional Configuration
-            CONFIG=sh (returnStdout: true, script: "echo ${ICP_ADDITIONAL_CONFIG}|tr '\n' ' '")
-            CONF = "'${CONFIG}'"
 	 }
 
     stages {
@@ -110,8 +108,9 @@ pipeline {
                         WORKER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
                         VA=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
                         PROXY=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
+                        GLUSTER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
                         // Updating tempate file with env variables
-                        updateTemplate(AUTH_URL, ZONE, IMAGE, MASTER, WORKER, MANAGER, VA, PROXY, env.DISTRO, NUM_OF_WORKERS )
+                        updateTemplate(AUTH_URL, ZONE, IMAGE, MASTER, WORKER, MANAGER, VA, PROXY, GLUSTER, env.DISTRO, NUM_OF_WORKERS )
                         }
                     catch (err)
                     {
@@ -157,7 +156,7 @@ pipeline {
                         echo 'Deploying Cluster!'
 
                         cd ${WORKSPACE}/canary-deployments
-                        make $TARGET
+                        make VERSION=$ICP_VERSION $TARGET
                         sleep 60
                         '''
                         }
