@@ -11,6 +11,8 @@ management_services:
 # all null s are replaced by "null" as the terraform api 
 # converts null as empty string, which fails in terraform validation
 # https://github.com/sclevine/yj/issues/6#issuecomment-507004342
+# Also refer https://github.ibm.com/IBMPrivateCloud/roadmap/issues/25114
+single_cluster_mode: false
 multicluster-endpoint:
   global:
     clusterName: "{{ cluster_name }}"
