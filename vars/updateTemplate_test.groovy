@@ -9,7 +9,7 @@ def call(String authurl, String pvczone, String distroimage, String mast, String
     sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q 'icp_configuration' \"${TERMPLATE_FILE}\" && sed -i  -e '/etcd_extra_args/r ${WORKSPACE}/config.tf' \"${TERMPLATE_FILE}\""
     sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q '^os_network *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^os_network *=.*\$|os_network = \\\"${OS_NETWORK}\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nos_network = \\\"${OS_NETWORK}\\\"|g\" \"${TERMPLATE_FILE}\""
     sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q '^os_private_network *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^os_private_network *=.*\$|os_private_network = \\\"${OS_NETWORK}\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nos_private_network = \\\"${OS_NETWORK}\\\"|g\" \"${TERMPLATE_FILE}\""
-    sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q '^tenant_name *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^tenant_name *=.*\$|tenant_name = \\\"icp-test\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\ntenant_name = \\\"icp-test\\\"|g\" \"${TERMPLATE_FILE}\""
+    sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q '^tenant_name *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^tenant_name *=.*\$|tenant_name = \\\"${OS_TENANT_NAME}\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\ntenant_name = \\\"${OS_TENANT_NAME}\\\"|g\" \"${TERMPLATE_FILE}\""
     if (env.DEPLOY_WORKER == "true")
     {
         numofworkers="${NUM_OF_WORKERS}"
@@ -98,6 +98,8 @@ def call(String authurl, String pvczone, String distroimage, String mast, String
         sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q '^offline_image_location *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^offline_image_location *=.*\$|offline_image_location = \\\"${IMAGE_URL}\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\noffline_image_location = \\\"${IMAGE_URL}\\\"|g\" \"${TERMPLATE_FILE}\""
         //sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q '^offline_remote_password *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^offline_remote_password *=.*\$|offline_remote_password = \\\"${ARTIFACTORY_TOKEN}\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\noffline_remote_password = \\\"${ARTIFACTORY_TOKEN}\\\"|g\" \"${TERMPLATE_FILE}\""
         sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q '^icp_version *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^icp_version *=.*\$|icp_version = \\\"false\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nicp_version = \\\"false\\\"|g\" \"${TERMPLATE_FILE}\""
+        sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q 'private_registry_enabled *=' \"${TERMPLATE_FILE}\" && sed -i \"s|private_registry_enabled *=.*\$|private_registry_enabled = \\\"false\\\"|g\" \"${TERMPLATE_FILE}\" "
+        sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q 'chart_repo *=' \"${TERMPLATE_FILE}\" && sed -i '/chart_repo *=/,+5d' \"${TERMPLATE_FILE}\" "
     }
 
 
