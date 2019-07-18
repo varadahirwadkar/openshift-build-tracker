@@ -588,7 +588,7 @@ pipeline {
                     try {
                         sh '''
                         echo 'Deploying Cluster!'
-                        export TF_VAR_offline_remote_password=$ARTIFACTORY_TOKEN
+                        export TF_VAR_offline_remote_password=$TF_VAR_password
                         cd ${WORKSPACE}/canary-deployments
                         make VERSION=$ICP_VERSION $TARGET
                         sleep 60
