@@ -149,7 +149,6 @@ properties([
                             import jenkins.model.*
                             if ( Build.equals("offline") )
                             {
-                                //this script uses the login credentials configured in the jenkins environment
                                 instance = Jenkins.getInstance()
                                 globalNodeProperties = instance.getGlobalNodeProperties()
                                 def user = ""
