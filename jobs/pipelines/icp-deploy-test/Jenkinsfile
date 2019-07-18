@@ -374,7 +374,7 @@ pipeline {
         TEST_SUITE = "run-ppc64le-tests"
         OS = "linux"
         OS_IDENTITY_API_VERSION='3'
-        OS_TENANT_NAME="ibm-default"
+        OS_TENANT_NAME="icp-test"
         OS_USER_DOMAIN_NAME="default"
         
 

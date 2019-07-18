@@ -100,6 +100,7 @@ def call(String authurl, String pvczone, String distroimage, String mast, String
         sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q '^icp_version *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^icp_version *=.*\$|icp_version = \\\"false\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nicp_version = \\\"false\\\"|g\" \"${TERMPLATE_FILE}\""
         sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q 'private_registry_enabled *=' \"${TERMPLATE_FILE}\" && sed -i \"s|private_registry_enabled *=.*\$|private_registry_enabled = \\\"false\\\"|g\" \"${TERMPLATE_FILE}\" "
         sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q 'chart_repo *=' \"${TERMPLATE_FILE}\" && sed -i '/chart_repo *=/,+5d' \"${TERMPLATE_FILE}\" "
+        sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q 'private_registry_server *=' \"${TERMPLATE_FILE}\" && sed -i '/private_registry_server *=/,+3d' \"${TERMPLATE_FILE}\" "
     }
 
 
