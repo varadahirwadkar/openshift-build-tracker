@@ -1,7 +1,7 @@
 management_services:
   istio: enabled
   vulnerability-advisor: enabled
-  storage-glusterfs: disabled
+  storage-glusterfs: enabled
   storage-minio: disabled
   platform-security-netpols: enabled
   node-problem-detector-draino: enabled
@@ -12,7 +12,14 @@ management_services:
 # converts null as empty string, which fails in terraform validation
 # https://github.com/sclevine/yj/issues/6#issuecomment-507004342
 # Also refer https://github.ibm.com/IBMPrivateCloud/roadmap/issues/25114
-single_cluster_mode: false
+istio:
+  kiali:
+    enabled: "true"
+  grafana:
+    enabled: "true"
+  prometheus:
+    enabled: "true"
+single_cluster_mode: "false"
 multicluster-endpoint:
   global:
     clusterName: "{{ cluster_name }}"
@@ -33,12 +40,12 @@ multicluster-endpoint:
   klusterlet:
     host: "null"
   prometheusIntegration:
-    enabled: true
+    enabled: "true"
   policy:
-    cemIntegration: false
+    cemIntegration: "false"
   topology:
-    enabled: true
+    enabled: "true"
   serviceRegistry:
-    enabled: true
+    enabled: "true"
     dnsSuffix: "mcm.svc"
     plugins: "kube-service"
