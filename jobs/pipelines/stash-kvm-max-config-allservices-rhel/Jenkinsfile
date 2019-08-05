@@ -80,7 +80,7 @@ pipeline {
                 script {
                     echo "Preparing power config file. conf/icp/config.yaml enables all the services and mcm"
                     sh "cat conf/icp/config.yaml >> ${WORKSPACE}/installer/cluster/power.config.yaml"
-                    sh "/usr/local/bin/yj-linux -yc < ${WORKSPACE}/installer/cluster/power.config.yaml > config.tf"
+                    //sh "/usr/local/bin/yj-linux -yc < ${WORKSPACE}/installer/cluster/power.config.yaml > config.tf"
                 }
             }
         }
