@@ -61,6 +61,8 @@ pipeline {
             boolean DEPLOY_WORKER = true
             boolean DEPLOY_PROXY = false
             boolean ENABLE_GLUSTER = false
+            boolean  ENABLE_ISTIO = false
+            boolean  POWER_CONFIG = false
             NUM_OF_WORKERS = "1"
             TIMEOUT = "0"
             TERMPLATE_FILE = ".deploy-power-powervc.tfvars.template"

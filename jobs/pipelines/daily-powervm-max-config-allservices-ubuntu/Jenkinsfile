@@ -63,6 +63,7 @@ pipeline {
             boolean DEPLOY_WORKER = true
             boolean DEPLOY_PROXY = false
             boolean ENABLE_GLUSTER = true
+            boolean  ENABLE_ISTIO = true
             NUM_OF_WORKERS = "1"
             TIMEOUT = "0"
             TERMPLATE_FILE = ".deploy-power-powervc.tfvars.template"
@@ -80,8 +81,8 @@ pipeline {
             steps {
                 script {
                     echo "Preparing power config file. conf/icp/config.yaml enables all the services and mcm"
-                    sh "cat conf/icp/config.yaml >> ${WORKSPACE}/installer/cluster/power.config.yaml"
-                    sh "/usr/local/bin/yj-linux -yc < ${WORKSPACE}/installer/cluster/power.config.yaml > config.tf"
+                    sh "cat conf/icp/istio.yaml >> ${WORKSPACE}/installer/cluster/power.config.yaml"
+                    sh "/usr/local/bin/yj-linux -yc < conf/icp/management_services.yaml  > config.tf"
                 }
             }
         }

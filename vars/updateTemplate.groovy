@@ -6,8 +6,11 @@ def call(String authurl, String pvczone, String distroimage, String mast, String
     sh " cd ${WORKSPACE}/canary-deployments/templates && [ ! -z distroimage ] && grep -q '^os_image_name *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^os_image_name *=.*\$|os_image_name = \\\"\"${distroimage}\"\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nos_image_name = \\\"\"${distroimage}\"\\\"|g\" \"${TERMPLATE_FILE}\""
     sh " cd ${WORKSPACE}/canary-deployments/templates && grep -q '^master =' \"${TERMPLATE_FILE}\" && sed -i \"s|^master *=.*\$|master = \"'${mast}'\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nmaster = \"'${mast}'\"|g\" \"${TERMPLATE_FILE}\""
     sh " cd ${WORKSPACE}/canary-deployments/templates && [ ! -z distro ] && grep -q '^image_distro *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^image_distro *=.*\$|image_distro = \\\"\"${distro}\"\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nimage_distro = \\\"\"${distro}\"\\\"|g\" \"${TERMPLATE_FILE}\""
-    //sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q 'icp_configuration' \"${TERMPLATE_FILE}\" && sed -i  -e '/etcd_extra_args/r ${WORKSPACE}/config.tf' \"${TERMPLATE_FILE}\""
-    sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q '^icp_config_file *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^icp_config_file *=.*\$|icp_config_file = \\\"${WORKSPACE}/installer/cluster/power.config.yaml\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nicp_config_file = \\\"${WORKSPACE}/installer/cluster/power.config.yaml\\\"|g\" \"${TERMPLATE_FILE}\""
+    sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q 'icp_configuration' \"${TERMPLATE_FILE}\" && sed -i  -e '/etcd_extra_args/r ${WORKSPACE}/config.tf' \"${TERMPLATE_FILE}\""
+    if (env.SERVER_CONFIG == "Max")
+    {
+        sh " cd ${WORKSPACE}/canary-deployments/templates &&  grep -q '^icp_config_file *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^icp_config_file *=.*\$|icp_config_file = \\\"${WORKSPACE}/installer/cluster/power.config.yaml\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\nicp_config_file = \\\"${WORKSPACE}/installer/cluster/power.config.yaml\\\"|g\" \"${TERMPLATE_FILE}\""
+    }
     if (env.DEPLOY_WORKER == "true")
     {
         num=numofworkers.toInteger()
@@ -53,6 +56,16 @@ def call(String authurl, String pvczone, String distroimage, String mast, String
         GL1=sh (returnStdout: true, script: "echo ${gluster}|sed \"s|nodes *=.*,|nodes = \\\"0\\\",|g\" |tr '\n' ' '| sed \"s|\\s*\$||g\"")
         sh " cd ${WORKSPACE}/canary-deployments/templates && grep -q '^gluster *=' \"${TERMPLATE_FILE}\" && sed -i \"s|^gluster *=.*\$|gluster = \"'${GL1}'\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"4s|\$|\\ngluster = \"'${GL1}'\"|g\" \"${TERMPLATE_FILE}\""
         sh " cd ${WORKSPACE}/canary-deployments/templates && grep -q 'storage-glusterfs.*=' \"${TERMPLATE_FILE}\" && sed -i \"s|.*storage-glusterfs.*=.*\$|\\\"storage-glusterfs\\\" = \\\"disabled\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"\\\"storage-glusterfs\\\" = \\\"disabled\\\" |a  \"'management_services = {'\"|\" \"${TERMPLATE_FILE}\""
+    }
+
+
+    if (env.ENABLE_ISTIO == "true")
+    {
+        sh " cd ${WORKSPACE}/canary-deployments/templates && grep -q 'istio.*=' \"${TERMPLATE_FILE}\" && sed -i \"s|.*istio.*=.*\$|\\\"istio\\\" = \\\"enabled\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"|\\\"istio = enabled\\\" |a  \"'management_services = {'\"|\" \"${TERMPLATE_FILE}\""
+    }
+    else if (env.ENABLE_ISTIO == "false")
+    {
+        sh " cd ${WORKSPACE}/canary-deployments/templates && grep -q 'istio.*=' \"${TERMPLATE_FILE}\" && sed -i \"s|.*istio.*=.*\$|\\\"istio\\\" = \\\"disabled\\\"|g\" \"${TERMPLATE_FILE}\" || sed -i \"\\\"istio\\\" = \\\"disabled\\\" |a  \"'management_services = {'\"|\" \"${TERMPLATE_FILE}\""
     }
 
     if (env.SYSTEM_TUNING == "false")

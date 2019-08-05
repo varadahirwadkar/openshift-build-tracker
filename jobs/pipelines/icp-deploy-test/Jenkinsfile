@@ -420,14 +420,14 @@ pipeline {
                     {
                         echo "Preparing power config file"
                         sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/power.config.yaml"
-                        sh "/usr/local/bin/yj-linux -yc < ${WORKSPACE}/installer/cluster/power.config.yaml > config.tf"
+                        //sh "/usr/local/bin/yj-linux -yc < ${WORKSPACE}/installer/cluster/power.config.yaml > config.tf"
                     }
                     else if ( env.SERVER_CONFIG == "Min" )
                     {
                         // Minimum config uses the default (x86's) config file
                         echo "Preparing power config file"
                         sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/config.yaml"
-                        sh "/usr/local/bin/yj-linux -yc < ${WORKSPACE}/installer/cluster/config.yaml > config.tf"
+                        //sh "/usr/local/bin/yj-linux -yc < ${WORKSPACE}/installer/cluster/config.yaml > config.tf"
                     }
                 }
             }
