@@ -281,7 +281,7 @@ properties([
         ],
         [$class: 'CascadeChoiceParameter', 
             choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the network from the Dropdown List(preferably icp_network1..(icp_network:181(VLAN=2079))icp_network1:64(VLAND:2230))', 
+            description: 'Select the network from the Dropdown List(preferably icp_network1..(icp_network:181(VLAN=2079))icp_network1:64(VLAND:2230) or icp_network2(VLAN=2231) )', 
             filterLength: 1, 
             filterable: false, 
             name: 'Network', 
@@ -303,7 +303,7 @@ properties([
                                 return["icp_netowrk"]
                             }
                             else if(Virtualization.equals("PowerVM")){
-                                return["icp_network1"]
+                                return["icp_network2", "icp_network1"]
                             }
                         '''
                 ]
