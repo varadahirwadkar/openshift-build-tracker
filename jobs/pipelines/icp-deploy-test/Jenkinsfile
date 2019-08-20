@@ -78,7 +78,7 @@ properties([
                         import com.cloudbees.plugins.credentials.CredentialsProvider
                         import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials
                         if ( Build.equals("Online") && Repo.equals("edge") || Build.equals("Online") && Repo.equals("stash")){
-                                return["3.2.0","4.1.0","latest:selected"]
+                                return["3.2.0","3.2.1","4.1.0","latest:selected"]
                             }
                             else if(Build.equals("Online") && Repo.equals("release")){
                                 return["3.1.0","3.1.1","3.1.2","3.2.0:selected"]
@@ -281,7 +281,7 @@ properties([
         ],
         [$class: 'CascadeChoiceParameter', 
             choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the network from the Dropdown List(preferably icp_network1..(icp_network:181(VLAN=2079))icp_network1:64(VLAND:2230) or icp_network2(VLAN=2231) )', 
+            description: 'Select the network from the Dropdown List(preferably icp_network1..(icp_network:181(VLAN=2079))icp_network1:64(VLAND:2230))', 
             filterLength: 1, 
             filterable: false, 
             name: 'Network', 
@@ -300,10 +300,10 @@ properties([
                     sandbox: false, 
                     script: 
                         ''' if (Virtualization.equals("KVM")){
-                                return["icp_netowrk"]
+                                return["icp_network"]
                             }
                             else if(Virtualization.equals("PowerVM")){
-                                return["icp_network2", "icp_network1"]
+                                return["icp_network1", "icp_network", "icp_network2"]
                             }
                         '''
                 ]
@@ -313,7 +313,7 @@ properties([
 ])
 //Define global variables
 def AUTH_URL
-def ZONE
+def AVAILABILITY_ZONE
 def IMAGE
 def MASTER
 def WORKER
@@ -324,6 +324,9 @@ def PROXY
 def TIMEOUT_SEC
 def TIMEOUT_MIN
 def CONF
+def ICP_CONFIG_FILE
+def MASTER_TEMPLATE
+def IMAGE_DISTRO
 env.DISTRO = ""
 
 pipeline {
@@ -336,7 +339,6 @@ pipeline {
         }
     }
     parameters {
-        //choice(name: 'Build', choices: 'daily\nintegration\nedge\nstash\nstable\nrelease', description: 'Choose the build')
         choice(name: 'ServerConfig', choices: 'Max\nMin', description: 'Choose The machine configuration(Max: 16cpu, 64G ; Min:2cpu, 16G)')
         booleanParam(defaultValue: true, name: 'DeployMaster', description: 'Select if you want to Deploy Master node')
         string(defaultValue: '1', description: 'Enter Number of Masters needed', name: 'NumOfMasters')
@@ -348,6 +350,14 @@ pipeline {
         booleanParam(defaultValue: false, name: 'DeployWorker', description: 'Select if you want to Deploy Worker node')
         string(defaultValue: '1', description: 'Enter Number of workers needed', name: 'NumOfWorkers')
         booleanParam(defaultValue: false, name: 'EnableGluster', description: 'Select if you want to enable Gluster Persistant storage')
+        string(defaultValue: '3', description: 'Enter Number of workers needed', name: 'NumOfGlusters')
+        booleanParam(defaultValue: false, name: 'EnableIstio', description: 'Select if you want to enable istio(Provide the required configuration in ICPConfig)')
+        booleanParam(defaultValue: false, name: 'EnableMCM', description: 'Select if you want to enable multicluster-endpoint(Provide the required configuration in ICPConfig)')
+        booleanParam(defaultValue: false, name: 'EnableNodeProblemDetector', description: 'Select if you want to enable node-problem-detector-draino')
+        booleanParam(defaultValue: false, name: 'EnablePlatformSecurity', description: 'Select if you want to enable platform-security-netpols')
+        booleanParam(defaultValue: false, name: 'EnableStorageMinio', description: 'Select if you want to enable storage-minio(Provide the required configuration in ICPConfig)')
+        booleanParam(defaultValue: false, name: 'EnableKnative', description: 'Select if you want to enable knative(Provide the required configuration in ICPConfig)')
+        //booleanParam(defaultValue: false, name: 'EnableKmsPlugin', description: 'Select if you want to enable kmsplugin')
         booleanParam(defaultValue: false, name: 'SystemTuning', description: 'Select if you want to have system tuning for performance')
         text(name: 'ICPConfig', defaultValue: '', description: 'Paste the additional ICP config in yaml format')
         string(defaultValue: '0', description: 'Enter time(in Minutes) to retain the cluster', name: 'KeepFor')
@@ -374,11 +384,9 @@ pipeline {
         TEST_SUITE = "run-ppc64le-tests"
         OS = "linux"
         OS_IDENTITY_API_VERSION='3'
-        OS_TENANT_NAME="icp-test"
+        OS_TENANT_NAME="ibm-default"
         OS_USER_DOMAIN_NAME="default"
         
-
-
         VIR_CHOSE = "${params.Virtualization}"
         HARDWARE_CHOSE = "${params.Hardware}"
         DISTRO_CHOSE = "${params.Operatingsystem}"
@@ -388,21 +396,33 @@ pipeline {
         BUILD_TYPE = "${params.Build}"
         ICP_ADDITIONAL_CONFIG = "'${params.ICPConfig}'"
         SERVER_CONFIG = "${params.ServerConfig}"
-        boolean DEPLOY_MASTER = "${params.DeployMaster}"
-        boolean DEPLOY_VA = "${params.DeployVA}"
-        boolean DEPLOY_MANAGER = "${params.DeployManager}"
-        boolean DEPLOY_WORKER = "${params.DeployWorker}"
-        boolean SYSTEM_TUNING = "${params.SystemTuning}"
-        boolean DEPLOY_PROXY = "${params.DeployProxy}"
-        boolean ENABLE_GLUSTER = "${params.EnableGluster}"
-        NUM_OF_WORKERS = "${params.NumOfWorkers}"
-        NUM_OF_MASTERS = "${params.NumOfMasters}"
-        NUM_OF_MANAGERS = "${params.NumOfManagers}"
-        NUM_OF_PROXIES = "${params.NumOfProxies}"
+
+        VA = "${params.DeployVA == true ? "enabled"  : "disabled"}"
+        ISTIO = "${params.EnableIstio == true ? "enabled"  : "disabled"}"
+        MCM = "${params.EnableMCM == true ? "enabled"  : "disabled"}"
+        NPDD = "${params.EnableNodeProblemDetector == true ? "enabled"  : "disabled"}"
+        PSN = "${params.EnablePlatformSecurity == true ? "enabled"  : "disabled"}"
+        MINIO = "${params.EnableStorageMinio == true ? "enabled"  : "disabled"}"
+        KNATIVE = "${params.EnableKnative == true ? "enabled"  : "disabled"}"
+        GLUSTER_FS = "${params.EnableGluster == true ? "enabled"  : "disabled"}"
+        SYSTEM_TUNING = "${params.SystemTuning == true ? "enabled"  : "disabled"}"
+
+        boolean CREATE_STORAGE = "${params.EnableGluster == true ? "true"  : "false"}"
+
+        //boolean ENABLE_KMS = "${params.EnableKmsPlugin}"
+        NUM_OF_WORKERS = "${params.DeployWorker == true ? params.NumOfWorkers : 0}"
+        NUM_OF_MASTERS = "${params.DeployMaster == true ? params.NumOfMasters : 0}"
+        NUM_OF_MANAGERS = "${params.DeployManager == true ? params.NumOfManagers : 0}"
+        NUM_OF_PROXIES = "${params.DeployProxy == true ? params.NumOfProxies : 0}"
+        NUM_OF_GLUSTERS = "${params.EnableGluster == true ? params.NumOfGlusters : 0}"
+
+        TASK = "${params.Build == 'Online' ? "test-icp-daily-online" : "test-icp-daily-offline"}"
+        
         TIMEOUT = "${params.KeepFor}"
-        OS_NETWORK="${params.Network}"
-        TERMPLATE_FILE = ".deploy-power-powervc.tfvars.template"
-        IMAGE_URL = "https://na.artifactory.swg-devops.com/artifactory/hyc-cloud-private-${DEPLOY_REPO}-generic-local/${BUILD_TYPE}/${ICP_VERSION}/${OFFLINE_TARBALL}"
+        OS_NETWORK = "${params.Network}"
+        OS_PRIVATE_NETWORK = "${params.Network}"
+        TERMPLATE_FILE = ".${TARGET}.tfvars.template"
+        OFFLINE_IMAGE_LOCATION = "https://na.artifactory.swg-devops.com/artifactory/hyc-cloud-private-${DEPLOY_REPO}-generic-local/${BUILD_TYPE}/${ICP_VERSION}/${OFFLINE_TARBALL}"
 	 }
 
     stages {
@@ -420,6 +440,7 @@ pipeline {
                     {
                         echo "Preparing power config file"
                         sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/power.config.yaml"
+                        env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/power.config.yaml"
                         //sh "/usr/local/bin/yj-linux -yc < ${WORKSPACE}/installer/cluster/power.config.yaml > config.tf"
                     }
                     else if ( env.SERVER_CONFIG == "Min" )
@@ -427,6 +448,7 @@ pipeline {
                         // Minimum config uses the default (x86's) config file
                         echo "Preparing power config file"
                         sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/config.yaml"
+                        env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/config.yaml"
                         //sh "/usr/local/bin/yj-linux -yc < ${WORKSPACE}/installer/cluster/config.yaml > config.tf"
                     }
                 }
@@ -449,62 +471,64 @@ pipeline {
                         if ( env.VIR_CHOSE == "KVM" )
                         {   
                             echo 'Setting-up terraform template file for KVM!'
-                            AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/kvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
-                            ZONE=getZone(env.VIR_CHOSE, HARDWARE_CHOSE )
-                            if ("${ZONE}" == null)
+                            env.AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/kvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
+                            env.AVAILABILITY_ZONE=getZone(env.VIR_CHOSE, HARDWARE_CHOSE )
+                            if ("${AVAILABILITY_ZONE}" == null)
                             {
-                                echo "Requested zone could not find in ${AUTH_URL}"
+                                echo "Requested zone could not find in ${env.AUTH_URL}"
                                 error('Requested zone could not find')
                             }
-                            IMAGE=getTheImage(AUTH_URL, env.DISTRO_CHOSE )
+                            env.OS_IMAGE=getTheImage(env.AUTH_URL, env.DISTRO_CHOSE )
+                            env.IMAGE_DISTRO = "${env.DISTRO}"
                             if ("${IMAGE}" == "")
                             {
-                                echo "Requested image could not find in ${AUTH_URL}"
+                                echo "Requested image could not find in ${env.AUTH_URL}"
                                 error('Requested image could not find')
 
                             }
                             if ( env.SERVER_CONFIG == "Min" )
                             {
                                 //2*8 > 16vcpus, 16G
-                                MASTER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
+                                env.MASTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
                                 if ("${MASTER}" == null)
                                 {
                                     echo "Requested template could not find"
                                     error('Requested zone could not find')
                                 }
-                                MANAGER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
-                                WORKER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
-                                VA=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
-                                PROXY=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
-                                GLUSTER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
+                                env.MANAGER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
+                                env.WORKER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
+                                env.VA_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
+                                env.PROXY_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
+                                env.GLUSTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
                             } 
                             else  if ( env.SERVER_CONFIG == "Max" )
                             {
                                 //16*8 > 128vcpus, 64G
-                                MASTER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
+                                env.MASTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
                                 if ("${MASTER}" == null)
                                 {
                                     echo "Requested template could not find"
                                     error('Requested zone could not find')
                                 }
-                                MANAGER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
-                                WORKER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
-                                VA=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
-                                PROXY=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
-                                GLUSTER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
+                                env.MANAGER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
+                                env.WORKER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
+                                env.VA_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
+                                env.PROXY_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
+                                env.GLUSTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
                             }
                         } 
                         else if ( env.VIR_CHOSE == "PowerVM" )
                         {
                             echo 'Setting-up terraform template file for PowerVM!'
-                            AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/pvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
-                            ZONE=getZone(env.VIR_CHOSE, HARDWARE_CHOSE )
-                            if ("${ZONE}" == null)
+                            env.AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/pvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
+                            env.AVAILABILITY_ZONE=getZone(env.VIR_CHOSE, HARDWARE_CHOSE )
+                            if ("${AVAILABILITY_ZONE}" == null)
                             {
                                 echo "Requested zone could not find in ${AUTH_URL}"
                                 error('Could not find requesed zone')
                             }
-                            IMAGE=getTheImage(AUTH_URL, env.DISTRO_CHOSE )
+                            env.OS_IMAGE=getTheImage(env.AUTH_URL, env.DISTRO_CHOSE )
+                            env.IMAGE_DISTRO = "${env.DISTRO}"
                             if ("${IMAGE}" == "")
                             {
                                 echo "Requested image could not find in ${AUTH_URL}"
@@ -514,42 +538,46 @@ pipeline {
                             if ( env.SERVER_CONFIG == "Min" )
                             {
                                 //2*8 > 16vcpus, 16G
-                                MASTER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
+                                env.MASTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
                                 if ("${MASTER}" == null)
                                 {
                                     echo "Requested template could not find"
                                     error('Requested zone could not find')
                                 }
-                                MANAGER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
-                                WORKER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
-                                VA=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
-                                PROXY=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
-                                GLUSTER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
+                                env.MANAGER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
+                                env.WORKER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
+                                env.VA_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
+                                env.PROXY_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
+                                env.GLUSTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
                             }
                             else if ( env.SERVER_CONFIG == "Max" )
                             {
                                 //2*8 > 128vcpus, 64G
-                                MASTER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
+                                env.MASTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
                                 if ("${MASTER}" == null)
                                 {
                                     echo "Requested template could not find"
                                     error('Requested zone could not find')
                                 }
-                                MANAGER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
-                                WORKER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
-                                VA=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
-                                PROXY=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
-                                GLUSTER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
+                                env.MANAGER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
+                                env.WORKER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
+                                env.VA_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
+                                env.PROXY_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
+                                env.GLUSTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
                             }
                         }
-                        // Updating tempate file with env variables
-                        updateTemplate_test(AUTH_URL, ZONE, IMAGE, MASTER, WORKER, MANAGER, VA, PROXY, GLUSTER, env.DISTRO )
+                        // Updating tempate file with env variables 
+                        sh """
+                            cd ${WORKSPACE}/deploy && make ${TASK}
+                            cat ${WORKSPACE}/deploy/${TASK}.tfvars.template
+                            cp ${WORKSPACE}/deploy/${TASK}.tfvars.template ${WORKSPACE}/canary-deployments/templates/${TERMPLATE_FILE}
+                        """
                         sh " cd ${WORKSPACE}/canary-deployments/templates && cat \"${TERMPLATE_FILE}\""
                     }
                     catch (err) 
                     {
                         echo 'Error ! Template prepration failed !'
-                        getArtifactoryAndClean(AUTH_URL)
+                        getArtifactoryAndClean(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -573,7 +601,7 @@ pipeline {
                         }
                     catch (err) {
                         echo 'Error ! ENV setup failed!'
-                        getArtifactoryAndClean(AUTH_URL)
+                        getArtifactoryAndClean(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -596,7 +624,7 @@ pipeline {
                         }
                     catch (err) {
                         echo 'Error ! Tearing off the cluster !'
-                        getArtifactoryAndClean(AUTH_URL)
+                        getArtifactoryAndClean(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -618,7 +646,7 @@ pipeline {
                         }
                     catch (err) {
                         echo 'Error ! Tearing off the cluster !'
-                        getArtifactoryAndClean(AUTH_URL)
+                        getArtifactoryAndClean(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -661,7 +689,7 @@ pipeline {
                         sleep TIMEOUT_SEC
                         }
                     finally {
-                        getArtifactoryAndClean(AUTH_URL)
+                        getArtifactoryAndClean(env.AUTH_URL)
                     }
                 }
             }

@@ -6,11 +6,13 @@ def IMAGE
 def MASTER
 def WORKER
 def MANAGER
+def GLUSTER
 def VA
 def PROXY
-def GLUSTER
 def TIMEOUT_SEC
 def TIMEOUT_MIN
+def CONF
+def IMAGE_DISTRO
 env.DISTRO = ""
 
 pipeline {
@@ -48,24 +50,45 @@ pipeline {
             OS_IDENTITY_API_VERSION='3'
             OS_TENANT_NAME="ibm-default"
             OS_USER_DOMAIN_NAME="default"
+            OS_PRIVATE_NETWORK = "icp_network"
+            OS_NETWORK = "icp_network" 
 
             VIR_CHOSE = "PowerVM"
             HARDWARE_CHOSE="P8"
             DISTRO_CHOSE = "RHEL7.6"
             DEPLOY_REPO = "edge"
-            ICP_VERSION = "4.1.0"
+            ICP_VERSION = "3.2.1"
             ICP_ADDITIONAL_CONFIG = ""
             SERVER_CONFIG = "Max"
-            boolean SYSTEM_TUNING = false
+            
             boolean DEPLOY_VA = true
             boolean DEPLOY_MANAGER = true
             boolean DEPLOY_WORKER = true
             boolean DEPLOY_PROXY = false
-            boolean ENABLE_GLUSTER = false
-            boolean  ENABLE_ISTIO = true
-            NUM_OF_WORKERS = "1"
+            boolean ENABLE_GLUSTER = true
+            boolean DEPLOY_MASTER = true
+
+            VA = "enabled"
+            ISTIO = "enabled"
+            MCM = "enabled"
+            NPDD = "enabled"
+            PSN = "enabled"
+            MINIO = "disabled"
+            KNATIVE = "disabled"
+            GLUSTER_FS = "enabled"
+
+            SYSTEM_TUNING = "disabled"
+
+            NUM_OF_WORKERS = "${DEPLOY_WORKER == true ? 1 : 0}"
+            NUM_OF_MASTERS = "${DEPLOY_MASTER == true ? 1 : 0}"
+            NUM_OF_MANAGERS = "${DEPLOY_MANAGER == true ? 1 : 0}"
+            NUM_OF_PROXIES = "${DEPLOY_PROXY == true ? 1 : 0}"
+            NUM_OF_GLUSTERS = "${ENABLE_GLUSTER == true ? 3 : 0}"
+            
             TIMEOUT = "0"
-            TERMPLATE_FILE = ".deploy-power-powervc.tfvars.template"
+            TERMPLATE_FILE = ".${TARGET}.tfvars.template"
+            TASK = "test-icp-daily-online"
+            OFFLINE_IMAGE_LOCATION = ""
 	 }
 
     stages {
@@ -79,9 +102,9 @@ pipeline {
         stage('Prepare Config') {
             steps {
                 script {
-                    echo "Preparing power config file. conf/icp/config.yaml enables all the services and mcm"
-                    sh "cat conf/icp/istio.yaml >> ${WORKSPACE}/installer/cluster/power.config.yaml"
-                    sh "/usr/local/bin/yj-linux -yc < conf/icp/management_services.yaml  > config.tf"
+                    echo "Preparing power config file"
+                    sh "cat conf/icp/config.yaml >> ${WORKSPACE}/installer/cluster/power.config.yaml"
+                    env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/power.config.yaml" 
                 }
             }
         }
@@ -95,39 +118,45 @@ pipeline {
                     {
 
                         echo 'Setting-up terraform template file for Max Config PowerVM!'
-                        AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/pvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
-                        ZONE=getZone(env.VIR_CHOSE, HARDWARE_CHOSE )
-                        if ("${ZONE}" == null)
+                        env.AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/pvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
+                        env.AVAILABILITY_ZONE=getZone(env.VIR_CHOSE, HARDWARE_CHOSE )
+                        if ("${env.AVAILABILITY_ZONE}" == null)
                         {
                             echo "Requested zone could not find"
                             error('Requested zone could not find')
                         }
-                        IMAGE=getTheImage(AUTH_URL, env.DISTRO_CHOSE )
-                        if ("${IMAGE}" == "")
+                        env.OS_IMAGE=getTheImage(env.AUTH_URL, env.DISTRO_CHOSE )
+                        env.IMAGE_DISTRO = "${env.DISTRO}"
+                        if ("${env.OS_IMAGE}" == "")
                         {
-                            echo "Requested image could not find in ${AUTH_URL}"
+                            echo "Requested image could not find in ${env.AUTH_URL}"
                             error('Requested image could not find')
 
                         }
                         //16*8 > 128vcpus, 64G
-                        MASTER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
-                        if ("${MASTER}" == null)
+                        env.MASTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
+                        if ("${env.MASTER_TEMPLATE}" == null)
                         {
                             echo "Requested template could not find"
                             error('Requested zone could not find')
                         }
-                        MANAGER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
-                        WORKER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
-                        VA=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
-                        PROXY=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
-                        GLUSTER=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
+                        env.MANAGER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
+                        env.WORKER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
+                        env.VA_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
+                        env.PROXY_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
+                        env.GLUSTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
                         // Updating tempate file with env variables
-                        updateTemplate(AUTH_URL, ZONE, IMAGE, MASTER, WORKER, MANAGER, VA, PROXY, GLUSTER, env.DISTRO, NUM_OF_WORKERS )
+                        sh """
+                            cd ${WORKSPACE}/deploy && make ${TASK}
+                            cat ${WORKSPACE}/deploy/${TASK}.tfvars.template
+                            cp ${WORKSPACE}/deploy/${TASK}.tfvars.template ${WORKSPACE}/canary-deployments/templates/${TERMPLATE_FILE}
+                        """
+                        sh " cd ${WORKSPACE}/canary-deployments/templates && cat \"${TERMPLATE_FILE}\""
                         }
                     catch (err)
                     {
                         echo 'Error ! Template prepration failed !'
-                        getArtifactoryAndClean(AUTH_URL)
+                        getArtifactoryAndClean(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -151,7 +180,7 @@ pipeline {
                         }
                     catch (err) {
                         echo 'Error ! ENV setup failed!'
-                        getArtifactoryAndClean(AUTH_URL)
+                        getArtifactoryAndClean(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -169,12 +198,12 @@ pipeline {
 
                         cd ${WORKSPACE}/canary-deployments
                         make VERSION=$ICP_VERSION $TARGET
-                        sleep 300
+                        sleep 60
                         '''
                         }
                     catch (err) {
                         echo 'Error ! Tearing off the cluster !'
-                        getArtifactoryAndClean(AUTH_URL)
+                        getArtifactoryAndClean(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -196,7 +225,7 @@ pipeline {
                         }
                     catch (err) {
                         echo 'Error ! Tearing off the cluster !'
-                        getArtifactoryAndClean(AUTH_URL)
+                        getArtifactoryAndClean(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -225,7 +254,7 @@ pipeline {
                         } 
                         echo "HOLDING THE CLUSTER TEAR DOWN FOR ${TIMEOUT_MIN} MINUTES"
                         sleep TIMEOUT_SEC
-                        getArtifactoryAndClean(AUTH_URL)
+                        getArtifactoryAndClean(env.AUTH_URL)
                     }
                 }
             }
