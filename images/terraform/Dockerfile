@@ -1,6 +1,8 @@
 FROM ubuntu:18.04
 USER root
 RUN apt update && apt install curl gnupg2 -y
+RUN curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+RUN echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | tee -a /etc/apt/sources.list.d/kubernetes.list
 RUN echo "deb https://deb.nodesource.com/node_8.x xenial main" | tee /etc/apt/sources.list.d/node.list
 RUN curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -
 RUN apt-get update && apt install --yes nodejs imagemagick gifsicle \
@@ -17,8 +19,9 @@ RUN apt-get update && apt install --yes nodejs imagemagick gifsicle \
         wget \
         git \
         curl \
+        kubectl \
         python-selenium \
-	sudo \
+	    sudo \
     && rm -rf /var/lib/apt/lists/*
 RUN wget -O /usr/local/bin/yj-linux https://github.com/sclevine/yj/releases/download/v4.0.0/yj-linux
 RUN chmod +x /usr/local/bin/yj-linux
