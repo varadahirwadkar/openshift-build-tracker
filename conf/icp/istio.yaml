@@ -5,12 +5,12 @@
 # Also refer https://github.ibm.com/IBMPrivateCloud/roadmap/issues/25114
 istio:
   kiali:
-    enabled: "true"
+    enabled: true
   grafana:
-    enabled: "true"
+    enabled: true
   prometheus:
-    enabled: "true"
-single_cluster_mode: "false"
+    enabled: true
+single_cluster_mode: false
 multicluster-endpoint:
   global:
     clusterName: "{{ cluster_name }}"
@@ -22,21 +22,16 @@ multicluster-endpoint:
     owner: "marketing"
   operator:
     bootstrapConfig:
-      hub0:
-        name: hub0
-        secret: kube-system/klusterlet-bootstrap
-      hub1:
-        name: "null"
-        secret: "null"
+      hubSecret: kube-system/klusterlet-bootstrap
   klusterlet:
-    host: "null"
+    host: null
   prometheusIntegration:
-    enabled: "true"
+    enabled: true
   policy:
-    cemIntegration: "false"
+    cemIntegration: false
   topology:
-    enabled: "true"
+    enabled: true
   serviceRegistry:
-    enabled: "true"
+    enabled: true
     dnsSuffix: "mcm.svc"
     plugins: "kube-service"
