@@ -34,6 +34,7 @@
             tar -czvf systeminfo.txt.tar.gz systeminfo.txt
             if ssh -i id_rsa -o StrictHostKeyChecking=no root@${MASTER_NODE} '[ -d /opt/ibm/cluster ]' ;then
                 scp -i id_rsa -o StrictHostKeyChecking=no ${WORKSPACE}/${PROJECTNAME}/hack/health_check.sh root@${MASTER_NODE}:/opt/ibm/cluster/
+                ssh -i id_rsa -o StrictHostKeyChecking=no root@${MASTER_NODE} rm -rf /opt/ibm/cluster/images
                 ssh -i id_rsa -o StrictHostKeyChecking=no root@${MASTER_NODE} /opt/ibm/cluster/health_check.sh
                 scp -i id_rsa -o StrictHostKeyChecking=no -r root@${MASTER_NODE}:/opt/ibm/cluster .
                 sed -i "s|header: 'X-JFrog-Art-Api.*$|header: 'X-JFrog-Art-Api: ************|g" cluster/config.yaml

@@ -23,8 +23,6 @@ RUN apt-get update && apt install --yes nodejs imagemagick gifsicle \
         python-selenium \
 	    sudo \
     && rm -rf /var/lib/apt/lists/*
-RUN wget -O /usr/local/bin/yj-linux https://github.com/sclevine/yj/releases/download/v4.0.0/yj-linux
-RUN chmod +x /usr/local/bin/yj-linux
 RUN pip install python-openstackclient
 RUN ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
 

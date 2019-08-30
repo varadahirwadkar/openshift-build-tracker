@@ -415,6 +415,7 @@ pipeline {
         NUM_OF_MANAGERS = "${params.DeployManager == true ? params.NumOfManagers : 0}"
         NUM_OF_PROXIES = "${params.DeployProxy == true ? params.NumOfProxies : 0}"
         NUM_OF_GLUSTERS = "${params.EnableGluster == true ? params.NumOfGlusters : 0}"
+        NUM_OF_VA = "${params.DeployVA == true ? 1 : 0}"
 
         TASK = "${params.Build == 'Online' ? "test-icp-daily-online" : "test-icp-daily-offline"}"
         
