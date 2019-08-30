@@ -16,6 +16,10 @@ def call(String virtualization, String serverConfig, String node){
     {
         TEMPLATE=sh(returnStdout: true, script: "grep \"${node}\" conf/computetemplates/pvmmaxconfig.conf|awk 'BEGIN{FS=\"${node}=\"}{print \$2}'|tr '\n' ' '").trim()
     }
+    else if (virtualization == "PowerVM" && serverConfig == "Mid")
+    {
+        TEMPLATE=sh(returnStdout: true, script: "grep \"${node}\" conf/computetemplates/pvmmidconfig.conf|awk 'BEGIN{FS=\"${node}=\"}{print \$2}'|tr '\n' ' '").trim()
+    }
     else
     {
         return null

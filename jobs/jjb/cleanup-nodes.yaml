@@ -16,13 +16,10 @@
             echo "Triggering on " + nodeName
             stage("Cleanup docker images") {
                 sh '''
-                  if [ ! $(docker ps -q) ];then
                       docker ps -q | xargs --no-run-if-empty docker stop || true
                       docker ps -q -a | xargs --no-run-if-empty docker rm  --volumes || true
                       docker volume ls -q | xargs --no-run-if-empty docker volume rm || true
                       docker images -a -q | xargs --no-run-if-empty docker rmi || true
-                      docker system prune -a -f
-                  fi
                 '''
             }
           }

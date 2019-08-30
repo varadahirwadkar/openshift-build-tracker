@@ -339,7 +339,7 @@ pipeline {
         }
     }
     parameters {
-        choice(name: 'ServerConfig', choices: 'Max\nMin', description: 'Choose The machine configuration(Max: 16cpu, 64G ; Min:2cpu, 16G)')
+        choice(name: 'ServerConfig', choices: 'Max\nMid\nMin', description: 'Choose The machine configuration(Max: 16cpu, 64G ;Mid: 32G,4cpu, Min:2cpu, 16G)')
         booleanParam(defaultValue: true, name: 'DeployMaster', description: 'Select if you want to Deploy Master node')
         string(defaultValue: '1', description: 'Enter Number of Masters needed', name: 'NumOfMasters')
         booleanParam(defaultValue: false, name: 'DeployVA', description: 'Select if you want to Deploy VA node')
@@ -384,7 +384,7 @@ pipeline {
         TEST_SUITE = "run-ppc64le-tests"
         OS = "linux"
         OS_IDENTITY_API_VERSION='3'
-        OS_TENANT_NAME="ibm-default"
+        OS_TENANT_NAME="icp-test"
         OS_USER_DOMAIN_NAME="default"
         
         VIR_CHOSE = "${params.Virtualization}"
@@ -484,38 +484,19 @@ pipeline {
                             {
                                 echo "Requested image could not find in ${env.AUTH_URL}"
                                 error('Requested image could not find')
-
                             }
-                            if ( env.SERVER_CONFIG == "Min" )
+                            env.MASTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
+                            if ("${MASTER}" == null)
                             {
-                                //2*8 > 16vcpus, 16G
-                                env.MASTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
-                                if ("${MASTER}" == null)
-                                {
-                                    echo "Requested template could not find"
-                                    error('Requested zone could not find')
-                                }
-                                env.MANAGER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
-                                env.WORKER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
-                                env.VA_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
-                                env.PROXY_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
-                                env.GLUSTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
-                            } 
-                            else  if ( env.SERVER_CONFIG == "Max" )
-                            {
-                                //16*8 > 128vcpus, 64G
-                                env.MASTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
-                                if ("${MASTER}" == null)
-                                {
-                                    echo "Requested template could not find"
-                                    error('Requested zone could not find')
-                                }
-                                env.MANAGER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
-                                env.WORKER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
-                                env.VA_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
-                                env.PROXY_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
-                                env.GLUSTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
+                                echo "Requested template could not find"
+                                error('Requested zone could not find')
                             }
+                            env.MANAGER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
+                            env.WORKER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
+                            env.VA_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
+                            env.PROXY_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
+                            env.GLUSTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
+                                                     
                         } 
                         else if ( env.VIR_CHOSE == "PowerVM" )
                         {
@@ -535,36 +516,17 @@ pipeline {
                                 error('Could not find requesed image')
 
                             }
-                            if ( env.SERVER_CONFIG == "Min" )
+                            env.MASTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
+                            if ("${MASTER}" == null)
                             {
-                                //2*8 > 16vcpus, 16G
-                                env.MASTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
-                                if ("${MASTER}" == null)
-                                {
-                                    echo "Requested template could not find"
-                                    error('Requested zone could not find')
-                                }
-                                env.MANAGER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
-                                env.WORKER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
-                                env.VA_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
-                                env.PROXY_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
-                                env.GLUSTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
+                                echo "Requested template could not find"
+                                error('Requested zone could not find')
                             }
-                            else if ( env.SERVER_CONFIG == "Max" )
-                            {
-                                //2*8 > 128vcpus, 64G
-                                env.MASTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
-                                if ("${MASTER}" == null)
-                                {
-                                    echo "Requested template could not find"
-                                    error('Requested zone could not find')
-                                }
-                                env.MANAGER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
-                                env.WORKER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
-                                env.VA_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
-                                env.PROXY_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
-                                env.GLUSTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
-                            }
+                            env.MANAGER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
+                            env.WORKER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
+                            env.VA_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
+                            env.PROXY_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
+                            env.GLUSTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
                         }
                         // Updating tempate file with env variables 
                         sh """
