@@ -339,7 +339,10 @@ pipeline {
         }
     }
     parameters {
-        choice(name: 'ServerConfig', choices: 'Max\nMid\nMin', description: 'Choose The machine configuration(Max: 16cpu, 64G ;Mid: 32G,4cpu, Min:2cpu, 16G)')
+        string(defaultValue: '4', description: 'Required Number of VCPUs(master,va,manager)', name: 'VcpusMaster')
+        string(defaultValue: '16', description: 'Required amount Memory(master,va,manager)', name: 'MemMaster')
+        string(defaultValue: '.1', description: 'Required Processing Units(master,va,manager)', name: 'ProUnitMaster')
+        //choice(name: 'ServerConfig', choices: 'Max\nMid\nMin', description: 'Choose The machine configuration(Max: 16cpu, 64G ;Mid: 32G,4cpu, Min:2cpu, 16G)')
         booleanParam(defaultValue: true, name: 'DeployMaster', description: 'Select if you want to Deploy Master node')
         string(defaultValue: '1', description: 'Enter Number of Masters needed', name: 'NumOfMasters')
         booleanParam(defaultValue: false, name: 'DeployVA', description: 'Select if you want to Deploy VA node')
@@ -348,6 +351,9 @@ pipeline {
         booleanParam(defaultValue: false, name: 'DeployProxy', description: 'Select if you want to Deploy Proxy node')
         string(defaultValue: '1', description: 'Enter Number of Proxy Nodes needed', name: 'NumOfProxies')
         booleanParam(defaultValue: false, name: 'DeployWorker', description: 'Select if you want to Deploy Worker node')
+        string(defaultValue: '4', description: 'Required Number of VCPUs(worker, gluster)', name: 'VcpusWorker')
+        string(defaultValue: '16', description: 'Required amount Memory(worker, gluster)', name: 'VcpusWorker')
+        string(defaultValue: '.1', description: 'Required Processing Units(worker, gluster)', name: 'ProUnitWorker')
         string(defaultValue: '1', description: 'Enter Number of workers needed', name: 'NumOfWorkers')
         booleanParam(defaultValue: false, name: 'EnableGluster', description: 'Select if you want to enable Gluster Persistant storage')
         string(defaultValue: '3', description: 'Enter Number of workers needed', name: 'NumOfGlusters')
@@ -396,6 +402,20 @@ pipeline {
         BUILD_TYPE = "${params.Build}"
         ICP_ADDITIONAL_CONFIG = "'${params.ICPConfig}'"
         SERVER_CONFIG = "${params.ServerConfig}"
+
+        VCPUS_REQ_MASTER = "${params.VcpusMaster}"
+        MEM_REQ_MASTER = "${params.MemMaster}"
+        PRO_UNIT_REQ_MASTER = "${params.ProUnitMaster}"
+        VCPUS_REQ_WORKER = "${params.VcpusWorker}"
+        MEM_REQ_WORKER = "${params.VcpusWorker}"
+        PRO_UNIT_REQ_WORKER = "${params.ProUnitWorker}"
+
+        MASTER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "master"
+        MANAGER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "master"
+        WORKER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "worker"
+        VA_TEMPLATE = "${env.BUILD_TAG}" + "-" + "master"
+        PROXY_TEMPLATE = "${env.BUILD_TAG}" + "-" + "worker"
+        GLUSTER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "worker"
 
         VA = "${params.DeployVA == true ? "enabled"  : "disabled"}"
         ISTIO = "${params.EnableIstio == true ? "enabled"  : "disabled"}"
@@ -493,18 +513,16 @@ pipeline {
                                 echo "Requested image could not find in ${env.AUTH_URL}"
                                 error('Requested image could not find')
                             }
-                            env.MASTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
-                            if ("${MASTER}" == null)
+                            status=createTemplate(env.AUTH_URL, env.VCPUS_REQ_MASTER, env.MEM_REQ_MASTER, env.PRO_UNIT_REQ_MASTER, env.MASTER_TEMPLATE)
+                            if ( status != 0)
                             {
-                                echo "Requested template could not find"
-                                error('Requested zone could not find')
+                                echo "Unable to create template ${env.MASTER_TEMPLATE}"
                             }
-                            env.MANAGER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
-                            env.WORKER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
-                            env.VA_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
-                            env.PROXY_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
-                            env.GLUSTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
-                                                     
+                            status=createTemplate(env.AUTH_URL, VCPUS_REQ_WORKER, MEM_REQ_WORKER, PRO_UNIT_REQ_WORKER, WORKER_TEMPLATE)
+                            if ( status != 0)
+                            {
+                                echo "Unable to create template ${env.WORKER_TEMPLATE}"
+                            }                        
                         } 
                         else if ( env.VIR_CHOSE == "PowerVM" )
                         {
@@ -524,17 +542,16 @@ pipeline {
                                 error('Could not find requesed image')
 
                             }
-                            env.MASTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
-                            if ("${MASTER}" == null)
+                            status=createTemplate(env.AUTH_URL, env.VCPUS_REQ_MASTER, env.MEM_REQ_MASTER, env.PRO_UNIT_REQ_MASTER, env.MASTER_TEMPLATE)
+                            if ( status != 0)
                             {
-                                echo "Requested template could not find"
-                                error('Requested zone could not find')
+                                echo "Unable to create template ${env.MASTER_TEMPLATE}"
                             }
-                            env.MANAGER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
-                            env.WORKER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
-                            env.VA_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
-                            env.PROXY_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
-                            env.GLUSTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
+                            status=createTemplate(env.AUTH_URL, VCPUS_REQ_WORKER, MEM_REQ_WORKER, PRO_UNIT_REQ_WORKER, WORKER_TEMPLATE)
+                            if ( status != 0)
+                            {
+                                echo "Unable to create template ${env.WORKER_TEMPLATE}"
+                            }    
                         }
                         // Updating tempate file with env variables 
                         sh """
