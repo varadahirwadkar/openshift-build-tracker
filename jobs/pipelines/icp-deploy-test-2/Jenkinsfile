@@ -443,6 +443,13 @@ pipeline {
                         env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/power.config.yaml"
                         //sh "/usr/local/bin/yj-linux -yc < ${WORKSPACE}/installer/cluster/power.config.yaml > config.tf"
                     }
+                    else if ( env.SERVER_CONFIG == "Mid" )
+                    {
+                        echo "Preparing power config file"
+                        sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/power.config.yaml"
+                        env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/power.config.yaml"
+                        //sh "/usr/local/bin/yj-linux -yc < ${WORKSPACE}/installer/cluster/power.config.yaml > config.tf"
+                    }
                     else if ( env.SERVER_CONFIG == "Min" )
                     {
                         // Minimum config uses the default (x86's) config file
