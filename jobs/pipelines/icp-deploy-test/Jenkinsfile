@@ -351,9 +351,9 @@ pipeline {
         booleanParam(defaultValue: false, name: 'DeployProxy', description: 'Select if you want to Deploy Proxy node')
         string(defaultValue: '1', description: 'Enter Number of Proxy Nodes needed', name: 'NumOfProxies')
         booleanParam(defaultValue: false, name: 'DeployWorker', description: 'Select if you want to Deploy Worker node')
-        string(defaultValue: '4', description: 'Required Number of VCPUs(worker, gluster)', name: 'VcpusWorker')
-        string(defaultValue: '16', description: 'Required amount Memory(worker, gluster)', name: 'VcpusWorker')
-        string(defaultValue: '.1', description: 'Required Processing Units(worker, gluster)', name: 'ProUnitWorker')
+        string(defaultValue: '4', description: 'Required Number of VCPUs(worker, gluster, proxy)', name: 'VcpusWorker')
+        string(defaultValue: '16', description: 'Required amount Memory(worker, gluster, proxy)', name: 'VcpusWorker')
+        string(defaultValue: '.1', description: 'Required Processing Units(worker, gluster, proxy)', name: 'ProUnitWorker')
         string(defaultValue: '1', description: 'Enter Number of workers needed', name: 'NumOfWorkers')
         booleanParam(defaultValue: false, name: 'EnableGluster', description: 'Select if you want to enable Gluster Persistant storage')
         string(defaultValue: '3', description: 'Enter Number of workers needed', name: 'NumOfGlusters')
@@ -456,29 +456,10 @@ pipeline {
         }
         stage('Prepare Config') {
             steps {
-                script {
-                    if ( env.SERVER_CONFIG == "Max" )
-                    {
-                        echo "Preparing power config file"
-                        sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/power.config.yaml"
-                        env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/power.config.yaml"
-                        //sh "/usr/local/bin/yj-linux -yc < ${WORKSPACE}/installer/cluster/power.config.yaml > config.tf"
-                    }
-                    else if ( env.SERVER_CONFIG == "Mid" )
-                    {
-                        echo "Preparing power config file"
-                        sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/power.config.yaml"
-                        env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/power.config.yaml"
-                        //sh "/usr/local/bin/yj-linux -yc < ${WORKSPACE}/installer/cluster/power.config.yaml > config.tf"
-                    }
-                    else if ( env.SERVER_CONFIG == "Min" )
-                    {
-                        // Minimum config uses the default (x86's) config file
-                        echo "Preparing power config file"
-                        sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/config.yaml"
-                        env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/config.yaml"
-                        //sh "/usr/local/bin/yj-linux -yc < ${WORKSPACE}/installer/cluster/config.yaml > config.tf"
-                    }
+                script { 
+                    echo "Preparing power config file"
+                    sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/power.config.yaml"
+                    env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/power.config.yaml"
                 }
             }
         }
