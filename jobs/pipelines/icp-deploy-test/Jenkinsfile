@@ -339,9 +339,9 @@ pipeline {
         }
     }
     parameters {
-        string(defaultValue: '4', description: 'Required Number of VCPUs(master,va,manager)', name: 'VcpusMaster')
-        string(defaultValue: '16', description: 'Required amount Memory(master,va,manager)', name: 'MemMaster')
-        string(defaultValue: '.1', description: 'Required Processing Units(master,va,manager)', name: 'ProUnitMaster')
+        string(defaultValue: '8', description: 'Required Number of VCPUs(master,va,manager)', name: 'VcpusMaster')
+        string(defaultValue: '32', description: 'Required amount Memory(master,va,manager)', name: 'MemMaster')
+        string(defaultValue: '.4', description: 'Required Processing Units(master,va,manager)Specify a value of processor units that is not greater than the value of virtual processors or less than five percent of the value of virtual processors.', name: 'ProUnitMaster')
         //choice(name: 'ServerConfig', choices: 'Max\nMid\nMin', description: 'Choose The machine configuration(Max: 16cpu, 64G ;Mid: 32G,4cpu, Min:2cpu, 16G)')
         booleanParam(defaultValue: true, name: 'DeployMaster', description: 'Select if you want to Deploy Master node')
         string(defaultValue: '1', description: 'Enter Number of Masters needed', name: 'NumOfMasters')
@@ -352,8 +352,8 @@ pipeline {
         string(defaultValue: '1', description: 'Enter Number of Proxy Nodes needed', name: 'NumOfProxies')
         booleanParam(defaultValue: false, name: 'DeployWorker', description: 'Select if you want to Deploy Worker node')
         string(defaultValue: '4', description: 'Required Number of VCPUs(worker, gluster, proxy)', name: 'VcpusWorker')
-        string(defaultValue: '16', description: 'Required amount Memory(worker, gluster, proxy)', name: 'VcpusWorker')
-        string(defaultValue: '.1', description: 'Required Processing Units(worker, gluster, proxy)', name: 'ProUnitWorker')
+        string(defaultValue: '16', description: 'Required amount Memory(worker, gluster, proxy)', name: 'MemWorker')
+        string(defaultValue: '.2', description: 'Required Processing Units(worker, gluster, proxy)Specify a value of processor units that is not greater than the value of virtual processors or less than five percent of the value of virtual processors.', name: 'ProUnitWorker')
         string(defaultValue: '1', description: 'Enter Number of workers needed', name: 'NumOfWorkers')
         booleanParam(defaultValue: false, name: 'EnableGluster', description: 'Select if you want to enable Gluster Persistant storage')
         string(defaultValue: '3', description: 'Enter Number of workers needed', name: 'NumOfGlusters')
@@ -392,6 +392,11 @@ pipeline {
         OS_IDENTITY_API_VERSION='3'
         OS_TENANT_NAME="icp-test"
         OS_USER_DOMAIN_NAME="default"
+        OS_PROJECT_DOMAIN_NAME="Default"
+        OS_COMPUTE_API_VERSION=2.37
+        OS_NETWORK_API_VERSION=2.0
+        OS_IMAGE_API_VERSION=2
+        OS_VOLUME_API_VERSION=2
         
         VIR_CHOSE = "${params.Virtualization}"
         HARDWARE_CHOSE = "${params.Hardware}"
@@ -407,7 +412,7 @@ pipeline {
         MEM_REQ_MASTER = "${params.MemMaster}"
         PRO_UNIT_REQ_MASTER = "${params.ProUnitMaster}"
         VCPUS_REQ_WORKER = "${params.VcpusWorker}"
-        MEM_REQ_WORKER = "${params.VcpusWorker}"
+        MEM_REQ_WORKER = "${params.MemWorker}"
         PRO_UNIT_REQ_WORKER = "${params.ProUnitWorker}"
 
         MASTER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "master"
@@ -471,6 +476,12 @@ pipeline {
                     }
                     try
                     {
+                        MEM_WORKER_GB = MEM_REQ_WORKER.toInteger()
+                        MEM_REQ_WORKER_MB = MEM_WORKER_GB * 1024
+
+                        MEM_MASTER_GB = MEM_REQ_MASTER.toInteger()
+                        MEM_REQ_MASTER_MB = MEM_MASTER_GB * 1024
+                        
                         if (env.DEPLOY_MASTER == "false")
                         {
                             echo "Cluster cant deploy without master"
@@ -494,12 +505,12 @@ pipeline {
                                 echo "Requested image could not find in ${env.AUTH_URL}"
                                 error('Requested image could not find')
                             }
-                            status=createTemplate(env.AUTH_URL, env.VCPUS_REQ_MASTER, env.MEM_REQ_MASTER, env.PRO_UNIT_REQ_MASTER, env.MASTER_TEMPLATE)
+                            status=createTemplate(env.AUTH_URL, env.VCPUS_REQ_MASTER, "${MEM_REQ_MASTER_MB}", env.PRO_UNIT_REQ_MASTER, env.MASTER_TEMPLATE)
                             if ( status != 0)
                             {
                                 echo "Unable to create template ${env.MASTER_TEMPLATE}"
                             }
-                            status=createTemplate(env.AUTH_URL, VCPUS_REQ_WORKER, MEM_REQ_WORKER, PRO_UNIT_REQ_WORKER, WORKER_TEMPLATE)
+                            status=createTemplate(env.AUTH_URL, VCPUS_REQ_WORKER, "${MEM_REQ_WORKER_MB}", PRO_UNIT_REQ_WORKER, WORKER_TEMPLATE)
                             if ( status != 0)
                             {
                                 echo "Unable to create template ${env.WORKER_TEMPLATE}"
@@ -523,12 +534,12 @@ pipeline {
                                 error('Could not find requesed image')
 
                             }
-                            status=createTemplate(env.AUTH_URL, env.VCPUS_REQ_MASTER, env.MEM_REQ_MASTER, env.PRO_UNIT_REQ_MASTER, env.MASTER_TEMPLATE)
+                            status=createTemplate(env.AUTH_URL, env.VCPUS_REQ_MASTER, "${MEM_REQ_MASTER_MB}", env.PRO_UNIT_REQ_MASTER, env.MASTER_TEMPLATE)
                             if ( status != 0)
                             {
                                 echo "Unable to create template ${env.MASTER_TEMPLATE}"
                             }
-                            status=createTemplate(env.AUTH_URL, VCPUS_REQ_WORKER, MEM_REQ_WORKER, PRO_UNIT_REQ_WORKER, WORKER_TEMPLATE)
+                            status=createTemplate(env.AUTH_URL, VCPUS_REQ_WORKER, "${MEM_REQ_WORKER_MB}", PRO_UNIT_REQ_WORKER, WORKER_TEMPLATE)
                             if ( status != 0)
                             {
                                 echo "Unable to create template ${env.WORKER_TEMPLATE}"
