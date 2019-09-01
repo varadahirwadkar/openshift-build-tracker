@@ -50,8 +50,27 @@ pipeline {
             OS_IDENTITY_API_VERSION='3'
             OS_TENANT_NAME="ibm-default"
             OS_USER_DOMAIN_NAME="default"
+            OS_PROJECT_DOMAIN_NAME="Default"
+            OS_COMPUTE_API_VERSION=2.37
+            OS_NETWORK_API_VERSION=2.0
+            OS_IMAGE_API_VERSION=2
+            OS_VOLUME_API_VERSION=2
             OS_PRIVATE_NETWORK = "icp_network"
-            OS_NETWORK = "icp_network" 
+            OS_NETWORK = "icp_network"
+
+            VCPUS_REQ_MASTER = "16"
+            MEM_REQ_MASTER = "64"
+            PRO_UNIT_REQ_MASTER = ".8"
+            VCPUS_REQ_WORKER = "4"
+            MEM_REQ_WORKER = "8"
+            PRO_UNIT_REQ_WORKER = ".2"
+
+            MASTER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "master"
+            MANAGER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "master"
+            WORKER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "worker"
+            VA_TEMPLATE = "${env.BUILD_TAG}" + "-" + "master"
+            PROXY_TEMPLATE = "${env.BUILD_TAG}" + "-" + "worker"
+            GLUSTER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "worker"
 
             VIR_CHOSE = "PowerVM"
             HARDWARE_CHOSE="P8"
@@ -84,6 +103,7 @@ pipeline {
             NUM_OF_MANAGERS = "${DEPLOY_MANAGER == true ? 1 : 0}"
             NUM_OF_PROXIES = "${DEPLOY_PROXY == true ? 1 : 0}"
             NUM_OF_GLUSTERS = "${ENABLE_GLUSTER == true ? 3 : 0}"
+            NUM_OF_VA = "${DEPLOY_VA == true ? 1 : 0}"
             
             TIMEOUT = "0"
             TERMPLATE_FILE = ".${TARGET}.tfvars.template"
@@ -116,6 +136,11 @@ pipeline {
                     }
                     try
                     {
+                        MEM_WORKER_GB = MEM_REQ_WORKER.toInteger()
+                        MEM_REQ_WORKER_MB = MEM_WORKER_GB * 1024
+
+                        MEM_MASTER_GB = MEM_REQ_MASTER.toInteger()
+                        MEM_REQ_MASTER_MB = MEM_MASTER_GB * 1024
 
                         echo 'Setting-up terraform template file for Max Config PowerVM!'
                         env.AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/pvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
@@ -133,18 +158,16 @@ pipeline {
                             error('Requested image could not find')
 
                         }
-                        //16*8 > 128vcpus, 64G
-                        env.MASTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
-                        if ("${env.MASTER_TEMPLATE}" == null)
+                        status=createTemplate(env.AUTH_URL, env.VCPUS_REQ_MASTER, "${MEM_REQ_MASTER_MB}", env.PRO_UNIT_REQ_MASTER, env.MASTER_TEMPLATE)
+                        if ( status != 0)
                         {
-                            echo "Requested template could not find"
-                            error('Requested zone could not find')
+                            echo "Unable to create template ${env.MASTER_TEMPLATE}"
                         }
-                        env.MANAGER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
-                        env.WORKER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
-                        env.VA_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
-                        env.PROXY_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
-                        env.GLUSTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
+                        status=createTemplate(env.AUTH_URL, VCPUS_REQ_WORKER, "${MEM_REQ_WORKER_MB}", PRO_UNIT_REQ_WORKER, WORKER_TEMPLATE)
+                        if ( status != 0)
+                        {
+                            echo "Unable to create template ${env.WORKER_TEMPLATE}"
+                        }  
                         // Updating tempate file with env variables
                         sh """
                             cd ${WORKSPACE}/deploy && make ${TASK}
