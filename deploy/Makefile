@@ -77,7 +77,7 @@ endif
 	-e "s|__SYSTEM_TUNING__|$(SYSTEM_TUNING)|g" -e "s|__NUM_OF_MASTERS__|$(NUM_OF_MASTERS)|g" -e "s|__NUM_OF_MANAGERS__|$(NUM_OF_MANAGERS)|g" -e "s|__NUM_OF_WORKERS__|$(NUM_OF_WORKERS)|g" -e "s|__NUM_OF_VA__|$(NUM_OF_VA)|g" -e "s|__NUM_OF_PROXIES__|$(NUM_OF_PROXIES)|g" -e "s|__NUM_OF_GLUSTERS__|$(NUM_OF_GLUSTERS)|g" \
 	-e "s|__ICP_CONFIG_FILE__|$(ICP_CONFIG_FILE)|g" -e "s|__OS_PRIVATE_NETWORK__|$(OS_PRIVATE_NETWORK)|g" -e "s|__OS_NETWORK__|$(OS_NETWORK)|g"  \
 	-e "s|__VA__|$(VA)|g" -e "s|__ISTIO__|$(ISTIO)|g" -e "s|__GLUSTER_FS__|$(GLUSTER_FS)|g" -e "s|__MCM__|$(MCM)|g" -e "s|__PSN__|$(PSN)|g" -e "s|__NPDD__|$(NPDD)|g" \
-	-e "s|__MINIO__|$(MINIO)|g" -e "s|__KNATIVE__|$(KNATIVE)|g" \
+	-e "s|__MINIO__|$(MINIO)|g" -e "s|__KNATIVE__|$(KNATIVE)|g" -e "s|__VERSION__|$(ICP_VERSION)|g" -e "s|__FIXPACK__|$(ICP_FIXPACK)|g" -e "s|__EDITION__|$(ICP_EDITION)|g"\
 	-e "s|__MASTER_TEMPLATE__|$(MASTER_TEMPLATE)|g" -e "s|__MANAGER_TEMPLATE__|$(MANAGER_TEMPLATE)|g" -e "s|__WORKER_TEMPLATE__|$(WORKER_TEMPLATE)|g" -e "s|__VA_TEMPLATE__|$(VA_TEMPLATE)|g" -e "s|__PROXY_TEMPLATE__|$(PROXY_TEMPLATE)|g" -e "s|__GLUSTER_TEMPLATE__|$(GLUSTER_TEMPLATE)|g" templates/$(TERRAFORM_VARS_FILE).template > $(TERRAFORM_VARS_FILE).template)
 	@echo -e        "\nAUTH_URL" = $(AUTH_URL)\
         "\nOS_TENANT_NAME" = $(OS_TENANT_NAME)\

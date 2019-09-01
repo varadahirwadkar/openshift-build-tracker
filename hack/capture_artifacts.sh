@@ -6,11 +6,11 @@
         exit 1 
     fi
     # Capturing Teraform template
-    if [ ! -f ${WORKSPACE}/canary-deployments/templates/.deploy-power-powervc.tfvars.template ]; then
-        echo "${WORKSPACE}/canary-deployments/templates/.deploy-power-powervc.tfvars.template not found!"
+    if [ ! -f ${WORKSPACE}/canary-deployments/.deploy-power-powervc.tfvars.template ]; then
+        echo "${WORKSPACE}/canary-deployments/.deploy-power-powervc.tfvars.template not found!"
         exit 1
     else
-        cp ${WORKSPACE}/canary-deployments/templates/.deploy-power-powervc.tfvars.template deploy-power-powervc.tfvars.template
+        cp ${WORKSPACE}/canary-deployments/.deploy-power-powervc.tfvars.template deploy-power-powervc.tfvars.template
         sed -i "s|ftp3_password.*$|ftp3_password  = ************|g" deploy-power-powervc.tfvars.template
     fi
     if [ ! -f .deploy-power-powervc.tfvars ]; then

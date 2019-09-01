@@ -45,7 +45,7 @@ pipeline {
             FUNCTIONAL_TEST_REPO = "icp-sanity-bats"
             TERRAFORM_VER = "0.11.13"
             TARGET = "deploy-power-powervc"
-            TEST_SUITE = "run-ppc64le-tests"
+            TEST_SUITE = "ppc64le"
             OS = "linux"
             OS_IDENTITY_API_VERSION='3'
             OS_TENANT_NAME="ibm-default"
@@ -79,6 +79,8 @@ pipeline {
             ICP_VERSION = "3.2.1"
             ICP_ADDITIONAL_CONFIG = ""
             SERVER_CONFIG = "Max"
+            ICP_FIXPACK = ""
+            ICP_EDITION = "ee"
             
             boolean DEPLOY_VA = true
             boolean DEPLOY_MANAGER = true
@@ -114,7 +116,7 @@ pipeline {
         //Checkout the canary-deployment git repo
         stage('Clone Canary Deployment') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CheckoutOption', timeout: 60], [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 60], [$class: 'RelativeTargetDirectory', relativeTargetDir: 'canary-deployments'], [$class: 'CleanBeforeCheckout']], submoduleCfg: [], userRemoteConfigs: [[ url: 'git@github.ibm.com:ICP-DevOps/canary-deployments.git', credentialsId: 'ibm-github']]])
+                checkout([$class: 'GitSCM', branches: [[name: '*/deploy-daily-power-pvc']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CheckoutOption', timeout: 60], [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 60], [$class: 'RelativeTargetDirectory', relativeTargetDir: 'canary-deployments'], [$class: 'CleanBeforeCheckout']], submoduleCfg: [], userRemoteConfigs: [[ url: 'git@github.ibm.com:ICP-DevOps/canary-deployments.git', credentialsId: 'ibm-github']]])
                 checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CheckoutOption', timeout: 60], [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 60], [$class: 'RelativeTargetDirectory', relativeTargetDir: 'installer'], [$class: 'CleanBeforeCheckout']], submoduleCfg: [], userRemoteConfigs: [[ url: 'git@github.ibm.com:IBMPrivateCloud/installer.git', credentialsId: 'ibm-github']]])
             }
         }
@@ -171,9 +173,9 @@ pipeline {
                         sh """
                             cd ${WORKSPACE}/deploy && make ${TASK}
                             cat ${WORKSPACE}/deploy/${TASK}.tfvars.template
-                            cp ${WORKSPACE}/deploy/${TASK}.tfvars.template ${WORKSPACE}/canary-deployments/templates/${TERMPLATE_FILE}
+                            cp ${WORKSPACE}/deploy/${TASK}.tfvars.template ${WORKSPACE}/canary-deployments/${TERMPLATE_FILE}
                         """
-                        sh " cd ${WORKSPACE}/canary-deployments/templates && cat \"${TERMPLATE_FILE}\""
+                        sh " cd ${WORKSPACE}/canary-deployments && cat \"${TERMPLATE_FILE}\""
                         }
                     catch (err)
                     {
