@@ -86,7 +86,7 @@ pipeline {
             boolean DEPLOY_MANAGER = true
             boolean DEPLOY_WORKER = true
             boolean DEPLOY_PROXY = false
-            boolean ENABLE_GLUSTER = true
+            boolean ENABLE_GLUSTER = false
             boolean DEPLOY_MASTER = true
 
             VA = "enabled"
@@ -223,7 +223,7 @@ pipeline {
 
                         cd ${WORKSPACE}/canary-deployments
                         make VERSION=$ICP_VERSION $TARGET
-                        sleep 60
+                        sleep 600
                         '''
                         }
                     catch (err) {

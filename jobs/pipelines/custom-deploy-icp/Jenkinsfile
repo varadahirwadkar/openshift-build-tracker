@@ -631,7 +631,7 @@ pipeline {
                         export TF_VAR_offline_remote_password=$TF_VAR_password
                         cd ${WORKSPACE}/canary-deployments
                         make VERSION=$ICP_VERSION $TARGET
-                        sleep 60
+                        sleep 600
                         '''
                         }
                     catch (err) {
