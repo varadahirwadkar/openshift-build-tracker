@@ -406,6 +406,10 @@ deploy-openshift-aws\:clean:
 ## ----- openshift-powervc -----
 # ---------------------------------
 
+# ---------------------------------
+## ----- openshift-powervc -----
+# ---------------------------------
+
 .PHONY: deploy-openshift-powervc\:
 ## Create power build on powervc tenant
 deploy-openshift-powervc: %deploy-openshift-powervc:
@@ -414,15 +418,16 @@ deploy-openshift-powervc: %deploy-openshift-powervc:
         -e "s|__OS_IMAGE__|$(OS_IMAGE)|g" -e "s|__OS_NETWORK__|$(OS_NETWORK)|g" \
 		-e "s|__NUM_OF_MASTERS__|$(NUM_OF_MASTERS)|g" -e "s|__NUM_OF_WORKERS__|$(NUM_OF_WORKERS)|g" \
         -e "s|__ENABLED_MANAGEMENT_SERVICES__|$(ENABLED_MANAGEMENT_SERVICES)|g" -e "s|__ICP_INSTALLER_TAG__|$(ICP_INSTALLER_TAG)|g" \
-		-e "s|__ICP_CONFIG_FILE__|$(ICP_CONFIG_FILE)|g" \
+		-e "s|__ICP_CONFIG_FILE__|$(ICP_CONFIG_FILE)|g"  -e "s|__STORAGE__|$(STORAGE)|g" \
 		-e "s|__SKIP_ICP_INSTALL__|$(SKIP_ICP_INSTALL)|g" -e "s|__MASTER_TEMPLATE__|$(MASTER_TEMPLATE)|g" \
         -e "s|__WORKER_TEMPLATE__|$(WORKER_TEMPLATE)|g" -e "s|__ROOK_DISK_SIZE__|$(ROOK_DISK_SIZE)|g" \
         -e "s|__REDHAT_USERNAME__|$(REDHAT_USERNAME)|g" -e "s|__REDHAT_PASSWORD__|$(REDHAT_PASSWORD)|g"  \
         -e "s|__OS_USERNAME__|$(OS_USERNAME)|g" -e "s|__OS_PASSWORD__|$(OS_PASSWORD)|g"  \
+		-e "s|__FVD_USERNAME__|$(FVD_USERNAME)|g" -e "s|__FVD_PASSWORD__|$(FVD_PASSWORD)|g"  \
         -e "s|__ARTIFACTORY_USER__|$(ARTIFACTORY_USER)|g" -e "s|__ARTIFACTORY_TOKEN__|$(ARTIFACTORY_TOKEN)|g" \
         -e "s|__REPO__|$(DEPLOY_REPO)|g" templates/$(TERRAFORM_VARS_FILE).template > $(TERRAFORM_VARS_FILE))
 
-	@$(shell ../hack/prepare_template.sh  "$${ICP_ADDITIONAL_CONFIG}" "${TERRAFORM_VARS_FILE}")
+	@$(shell ../hack/prepare_template.sh  "$${ICP_ADDITIONAL_CONFIG}" "${TERRAFORM_VARS_FILE}" "${SKIP_ICP_INSTALL}")
 	@$(SELF) -s deploy:openshift:powervc OPENSHIFT_POWERVC_DEPLOY_DIR=$(TERRAFORM_DIR) OPENSHIFT_POWERVC_TERRAFORM_VARS_FILE=$(TERRAFORM_VARS_FILE)
 
 .PHONY: deploy-openshift-powervc\:config

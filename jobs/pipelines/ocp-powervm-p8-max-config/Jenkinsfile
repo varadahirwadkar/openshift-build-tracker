@@ -42,6 +42,8 @@ pipeline {
         ARTIFACTORY_TOKEN = credentials('ARTIFACTORY_TOKEN')
         REDHAT_USERNAME = credentials('REDHAT_USERNAME')
         REDHAT_PASSWORD = credentials('REDHAT_PASSWORD')
+        FVD_USERNAME = credentials('GITHUB_USER')
+        FVD_PASSWORD = credentials('TF_VAR_password')
 
 
         //Env constants
@@ -110,11 +112,12 @@ pipeline {
         NUM_OF_VA = "${DEPLOY_VA == true ? 1 : 0}"
 
         ROOK_DISK_SIZE = "50"
-        ENABLED_MANAGEMENT_SERVICES = "multicluster-endpoint, multicluster-hub, monitoring, logging"
+        ENABLED_MANAGEMENT_SERVICES = "multicluster-endpoint multicluster-hub monitoring logging"
         ICP_CONFIG_FILE="power.openshift.config.yaml"
-        SKIP_ICP_INSTALL="false"
+        SKIP_ICP_INSTALL="true"
         OS_INSTANCE_FLAVOUR="${MASTER_TEMPLATE}"
         ICP_INSTALLER_TAG="3.2.1"
+        STORAGE = "fvd"
         
         TIMEOUT = "0"
         TARGET = "deploy-openshift-powervc"
@@ -126,7 +129,6 @@ pipeline {
         BUILD_HARNESS_ORG="sudeeshjohn"
 	}
     stages {
-        //Checkout the canary-deployment git repo
         stage('Prepare Teraform Template') 
         {
             steps {
@@ -169,14 +171,7 @@ pipeline {
                         {
                             echo "Unable to create template ${env.WORKER_TEMPLATE}"
                         }
-                        // Updating tempate file with env variables
-                        // sh """
-                        //     cd ${WORKSPACE}/deploy && make ${TASK}
-                        //     cat ${WORKSPACE}/deploy/${TASK}.tfvars.template
-                        //     cp ${WORKSPACE}/deploy/${TASK}.tfvars.template ${WORKSPACE}/canary-deployments/${TERMPLATE_FILE}
-                        // """
-                        // sh " cd ${WORKSPACE}/canary-deployments && cat \"${TERMPLATE_FILE}\""
-                        }
+                    }
                     catch (err)
                     {
                         echo 'Error ! Template prepration failed !'
@@ -223,7 +218,7 @@ pipeline {
                         cd ${WORKSPACE}/deploy
                         #make VERSION=$ICP_VERSION $TARGET
                         make $TARGET
-                        sleep 600
+                        sleep 60
                         '''
                         }
                     catch (err) {
@@ -234,15 +229,20 @@ pipeline {
                 }
             }
         }
-        stage('Setup Kubectl') {
+        stage('Setup Cloudctl') {
             steps {
+                when {
+                    expression {
+                        return env.SKIP_ICP_INSTALL != "true";
+                    }
+                }
                 script {
                     ansiColor('xterm') {
                         echo ""
                     }
                     try {
                         sh '''
-                        echo 'Setting up the kubectl!'
+                        echo 'Setting up the cloudctl!'
 
                         cd ${WORKSPACE}/deploy
                         make $TARGET:config
@@ -256,7 +256,7 @@ pipeline {
                 }
             }
         }
-        stage('Run SERT Test') {
+        stage('Waiting to timeout') {
             steps {
                 script {
                     ansiColor('xterm') {
@@ -264,19 +264,15 @@ pipeline {
                     }
                     try {
                         sh '''
-                        echo 'Running SERT test!'
-                        cd ${WORKSPACE}/deploy
-
-                        make run-functional-tests
+                        echo 'waiting to time out'
                         '''
                         }
                     finally {
-                        echo ' SERT Test Completed '
                         TIMEOUT_MIN = TIMEOUT.toInteger()
                         if ( TIMEOUT_MIN != 0 )
                         {
                             TIMEOUT_SEC=TIMEOUT_MIN*60
-                        } 
+                        }
                         echo "HOLDING THE CLUSTER TEAR DOWN FOR ${TIMEOUT_MIN} MINUTES"
                         sleep TIMEOUT_SEC
                         getArtifactoryAndClean(env.AUTH_URL)
@@ -287,11 +283,11 @@ pipeline {
     }
     post {
         always {
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/systeminfo.txt.tar.gz', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/cluster.tar.gz', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/cluster/config.yaml', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/deploy-power-powervc.tfvars.template', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/deploy-power-powervc.tfvars', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/systeminfo.txt.tar.gz', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/cluster.tar.gz', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/cluster/config.yaml', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/deploy-power-powervc.tfvars.template', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/deploy-power-powervc.tfvars', fingerprint: true, onlyIfSuccessful: false
             cleanWs()
             notifyBySlack(currentBuild.result) 
         }

@@ -9,6 +9,10 @@ network_name = "__OS_NETWORK__"
 availability_zone ="__AVAILABILITY_ZONE__"
 tenant_name = "__OS_TENANT_NAME__"
 
+storage = "__STORAGE__"
+fvd_user_name = "__FVD_USERNAME__"
+fvd_password = "__FVD_PASSWORD__"
+
 worker = { nodes = "__NUM_OF_WORKERS__", instance_type = "__WORKER_TEMPLATE__", rook_size = "__ROOK_DISK_SIZE__"}
 master = { nodes = "__NUM_OF_MASTERS__", instance_type = "__MASTER_TEMPLATE__", rook_size = "__ROOK_DISK_SIZE__"}
 enabled_management_services=["__ENABLED_MANAGEMENT_SERVICES__"]

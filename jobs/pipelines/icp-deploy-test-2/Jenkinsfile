@@ -452,13 +452,13 @@ pipeline {
         OS_PRIVATE_NETWORK = "${params.Network}"
         TERMPLATE_FILE = ".${TARGET}.tfvars.template"
         OFFLINE_IMAGE_LOCATION = "https://na.artifactory.swg-devops.com/artifactory/hyc-cloud-private-${DEPLOY_REPO}-generic-local/${BUILD_TYPE}/${ICP_VERSION}/${OFFLINE_TARBALL}"
+        IMAGE_FILTER="cicd"
 	 }
 
     stages {
-        //Checkout the canary-deployment git repo
-        stage('Clone Canary Deployment') {
+        //Checkout the installer git repo
+        stage('Clone installer') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: '*/deploy-daily-power-pvc']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CheckoutOption', timeout: 60], [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 60], [$class: 'RelativeTargetDirectory', relativeTargetDir: 'canary-deployments'], [$class: 'CleanBeforeCheckout']], submoduleCfg: [], userRemoteConfigs: [[ url: 'git@github.ibm.com:ICP-DevOps/canary-deployments.git', credentialsId: 'ibm-github']]])
                 checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CheckoutOption', timeout: 60], [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 60], [$class: 'RelativeTargetDirectory', relativeTargetDir: 'installer'], [$class: 'CleanBeforeCheckout']], submoduleCfg: [], userRemoteConfigs: [[ url: 'git@github.ibm.com:IBMPrivateCloud/installer.git', credentialsId: 'ibm-github']]])
             }
         }
@@ -501,7 +501,7 @@ pipeline {
                                 echo "Requested zone could not find in ${env.AUTH_URL}"
                                 error('Requested zone could not find')
                             }
-                            env.OS_IMAGE=getTheImage(env.AUTH_URL, env.DISTRO_CHOSE )
+                            env.OS_IMAGE=getTheImage(env.AUTH_URL, env.DISTRO_CHOSE, env.IMAGE_FILTER )
                             env.IMAGE_DISTRO = "${env.DISTRO}"
                             if ("${IMAGE}" == "")
                             {
@@ -529,7 +529,7 @@ pipeline {
                                 echo "Requested zone could not find in ${AUTH_URL}"
                                 error('Could not find requesed zone')
                             }
-                            env.OS_IMAGE=getTheImage(env.AUTH_URL, env.DISTRO_CHOSE )
+                            env.OS_IMAGE=getTheImage(env.AUTH_URL, env.DISTRO_CHOSE, env.IMAGE_FILTER )
                             env.IMAGE_DISTRO = "${env.DISTRO}"
                             if ("${IMAGE}" == "")
                             {
@@ -548,13 +548,6 @@ pipeline {
                                 echo "Unable to create template ${env.WORKER_TEMPLATE}"
                             }    
                         }
-                        // Updating tempate file with env variables 
-                        sh """
-                            cd ${WORKSPACE}/deploy && make ${TASK}
-                            cat ${WORKSPACE}/deploy/${TASK}.tfvars.template
-                            cp ${WORKSPACE}/deploy/${TASK}.tfvars.template ${WORKSPACE}/canary-deployments/${TERMPLATE_FILE}
-                        """
-                        sh " cd ${WORKSPACE}/canary-deployments && cat \"${TERMPLATE_FILE}\""
                     }
                     catch (err) 
                     {
@@ -575,7 +568,7 @@ pipeline {
                         sh '''
                         echo 'Initializing supporting repos and keys !'
 
-                        cd ${WORKSPACE}/canary-deployments
+                        cd ${WORKSPACE}/deploy
                         make init
                         make keys
                         make setup-dependencies
@@ -599,7 +592,7 @@ pipeline {
                         sh '''
                         echo 'Deploying Cluster!'
                         export TF_VAR_offline_remote_password=$TF_VAR_password
-                        cd ${WORKSPACE}/canary-deployments
+                        cd ${WORKSPACE}/deploy
                         make VERSION=$ICP_VERSION $TARGET
                         sleep 60
                         '''
@@ -622,7 +615,7 @@ pipeline {
                         sh '''
                         echo 'Setting up the kubectl!'
 
-                        cd ${WORKSPACE}/canary-deployments
+                        cd ${WORKSPACE}/deploy
                         make $TARGET:config
                         '''
                         }
@@ -643,7 +636,7 @@ pipeline {
                     try {
                         sh '''
                         echo 'Running SERT test!'
-                        cd ${WORKSPACE}/canary-deployments
+                        cd ${WORKSPACE}/deploy
 
                         make run-functional-tests
                         echo ' SERT Test Completed '
@@ -679,11 +672,11 @@ pipeline {
     }
     post {
         always {
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/systeminfo.txt.tar.gz', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/cluster.tar.gz', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/cluster/config.yaml', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/deploy-power-powervc.tfvars.template', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/deploy-power-powervc.tfvars', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/systeminfo.txt.tar.gz', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/cluster.tar.gz', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/cluster/config.yaml', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/deploy-power-powervc.tfvars.template', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/deploy-power-powervc.tfvars', fingerprint: true, onlyIfSuccessful: false
             cleanWs()
             //notifyBySlack(currentBuild.result)
         }
