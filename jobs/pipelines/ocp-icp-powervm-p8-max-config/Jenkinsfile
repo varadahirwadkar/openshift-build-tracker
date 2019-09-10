@@ -114,7 +114,7 @@ pipeline {
         ROOK_DISK_SIZE = "50"
         ENABLED_MANAGEMENT_SERVICES = "multicluster-endpoint multicluster-hub monitoring logging"
         ICP_CONFIG_FILE="power.openshift.config.yaml"
-        SKIP_ICP_INSTALL="true"
+        SKIP_ICP_INSTALL="false"
         OS_INSTANCE_FLAVOUR="${MASTER_TEMPLATE}"
         ICP_INSTALLER_TAG="latest"
         STORAGE = "fvd"
