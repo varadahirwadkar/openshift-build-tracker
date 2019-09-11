@@ -17,7 +17,8 @@
         sed -i "s|docker_password.*$|docker_password: ************|g" ${TARGET}.tfvars
         sed -i "s|header.*X-JFrog-Art-Api.*$|header.*X-JFrog-Art-Api: ************|g" ${TARGET}.tfvars
         sed -i "s|password.*=.*$|password = ************|g" ${TARGET}.tfvars
-        sed -i "s|rhel_subscription_password.*=.*$|prhel_subscription_password = ************|g" ${TARGET}.tfvars
+        sed -i "s|rhel_subscription_password.*=.*$|rhel_subscription_password = ************|g" ${TARGET}.tfvars
+        cp ${TARGET}.tfvars powervc.tfvars
     fi
     MASTER_NODE=$(make terraform:output TERRAFORM_DIR=.${TARGET} TERRAFORM_OUTPUT_VAR=master-node || true)
     [ $? -ne 0 ] && exit 1;
@@ -28,7 +29,7 @@
             scp -i id_rsa -o StrictHostKeyChecking=no ${WORKSPACE}/${PROJECTNAME}/hack/system_info.sh root@${MASTER_NODE}:
             ssh -i id_rsa -o StrictHostKeyChecking=no root@${MASTER_NODE} /root/system_info.sh > systeminfo.txt
             tar -czvf systeminfo.txt.tar.gz systeminfo.txt
-            if [ ${SKIP_ICP_INSTALL} != "true" ]; then
+            if [ "${SKIP_ICP_INSTALL}" != "true" ]; then
                 if ssh -i id_rsa -o StrictHostKeyChecking=no root@${MASTER_NODE} '[ -d /opt/ibm/cluster ]' ;then
                     scp -i id_rsa -o StrictHostKeyChecking=no ${WORKSPACE}/${PROJECTNAME}/hack/health_check.sh root@${MASTER_NODE}:/opt/ibm/cluster/
                     ssh -i id_rsa -o StrictHostKeyChecking=no root@${MASTER_NODE} rm -rf /opt/ibm/cluster/images
