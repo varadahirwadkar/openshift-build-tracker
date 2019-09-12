@@ -123,7 +123,8 @@ pipeline {
         TARGET = "deploy-openshift-powervc"
         TERMPLATE_FILE = ".${TARGET}.tfvars.template"
         OFFLINE_IMAGE_LOCATION = ""
-        IMAGE_FILTER="openshift"
+        ENV="ocp"
+        IMAGE_FILETER = "${ENV == "ocp" ? "openshift":"cicd"}"
 
         //To pick build-harness . Remove once the Makefile.openshift_pvc upstreamed
         BUILD_HARNESS_ORG="sudeeshjohn"
@@ -175,7 +176,7 @@ pipeline {
                     catch (err)
                     {
                         echo 'Error ! Template prepration failed !'
-                        getArtifactoryAndClean(env.AUTH_URL)
+                        getArtifactsAndClean(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -199,7 +200,7 @@ pipeline {
                         }
                     catch (err) {
                         echo 'Error ! ENV setup failed!'
-                        getArtifactoryAndClean(env.AUTH_URL)
+                        getArtifactsAndClean(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -223,7 +224,7 @@ pipeline {
                         }
                     catch (err) {
                         echo 'Error ! Tearing off the cluster !'
-                        getArtifactoryAndClean(env.AUTH_URL)
+                        getArtifactsAndClean(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -250,7 +251,7 @@ pipeline {
                         }
                     catch (err) {
                         echo 'Error ! Tearing off the cluster !'
-                        getArtifactoryAndClean(env.AUTH_URL)
+                        getArtifactsAndClean(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -275,7 +276,7 @@ pipeline {
                         }
                         echo "HOLDING THE CLUSTER TEAR DOWN FOR ${TIMEOUT_MIN} MINUTES"
                         sleep TIMEOUT_SEC
-                        getArtifactoryAndClean(env.AUTH_URL)
+                        getArtifactsAndClean(env.AUTH_URL)
                     }
                 }
             }

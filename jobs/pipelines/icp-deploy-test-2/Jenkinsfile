@@ -452,7 +452,8 @@ pipeline {
         OS_PRIVATE_NETWORK = "${params.Network}"
         TERMPLATE_FILE = ".${TARGET}.tfvars.template"
         OFFLINE_IMAGE_LOCATION = "https://na.artifactory.swg-devops.com/artifactory/hyc-cloud-private-${DEPLOY_REPO}-generic-local/${BUILD_TYPE}/${ICP_VERSION}/${OFFLINE_TARBALL}"
-        IMAGE_FILTER="cicd"
+        ENV="icp"
+        IMAGE_FILETER = "${ENV == "ocp" ? "openshift":"cicd"}"
 	 }
 
     stages {
@@ -552,7 +553,7 @@ pipeline {
                     catch (err) 
                     {
                         echo 'Error ! Template prepration failed !'
-                        getArtifactoryAndClean(env.AUTH_URL)
+                        getArtifactsAndClean(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -576,7 +577,7 @@ pipeline {
                         }
                     catch (err) {
                         echo 'Error ! ENV setup failed!'
-                        getArtifactoryAndClean(env.AUTH_URL)
+                        getArtifactsAndClean(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -599,7 +600,7 @@ pipeline {
                         }
                     catch (err) {
                         echo 'Error ! Tearing off the cluster !'
-                        //getArtifactoryAndClean(env.AUTH_URL)
+                        //getArtifactsAndClean(env.AUTH_URL)
                         //throw err
                     }
                 }
@@ -621,7 +622,7 @@ pipeline {
                         }
                     catch (err) {
                         echo 'Error ! Tearing off the cluster !'
-                        //getArtifactoryAndClean(env.AUTH_URL)
+                        //getArtifactsAndClean(env.AUTH_URL)
                         //throw err
                     }
                 }
@@ -664,7 +665,7 @@ pipeline {
                         sleep TIMEOUT_SEC
                         }
                     finally {
-                        getArtifactoryAndClean(env.AUTH_URL)
+                        getArtifactsAndClean(env.AUTH_URL)
                     }
                 }
             }

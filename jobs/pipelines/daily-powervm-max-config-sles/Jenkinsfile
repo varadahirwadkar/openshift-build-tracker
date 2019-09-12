@@ -110,7 +110,8 @@ pipeline {
             TERMPLATE_FILE = ".${TARGET}.tfvars.template"
             TASK = "test-icp-daily-online"
             OFFLINE_IMAGE_LOCATION = ""
-            IMAGE_FILTER="cicd"
+            ENV="icp"
+            IMAGE_FILETER = "${ENV == "ocp" ? "openshift":"cicd"}"
 	 }
 
     stages {
@@ -173,7 +174,7 @@ pipeline {
                     catch (err)
                     {
                         echo 'Error ! Template prepration failed !'
-                        getArtifactoryAndClean(env.AUTH_URL)
+                        getArtifactsAndClean(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -197,7 +198,7 @@ pipeline {
                         }
                     catch (err) {
                         echo 'Error ! ENV setup failed!'
-                        getArtifactoryAndClean(env.AUTH_URL)
+                        getArtifactsAndClean(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -220,7 +221,7 @@ pipeline {
                         }
                     catch (err) {
                         echo 'Error ! Tearing off the cluster !'
-                        getArtifactoryAndClean(env.AUTH_URL)
+                        getArtifactsAndClean(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -242,7 +243,7 @@ pipeline {
                         }
                     catch (err) {
                         echo 'Error ! Tearing off the cluster !'
-                        getArtifactoryAndClean(env.AUTH_URL)
+                        getArtifactsAndClean(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -271,7 +272,7 @@ pipeline {
                         } 
                         echo "HOLDING THE CLUSTER TEAR DOWN FOR ${TIMEOUT_MIN} MINUTES"
                         sleep TIMEOUT_SEC
-                        getArtifactoryAndClean(env.AUTH_URL)
+                        getArtifactsAndClean(env.AUTH_URL)
                     }
                 }
             }
