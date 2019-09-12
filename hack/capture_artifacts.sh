@@ -31,7 +31,7 @@
             ssh -i id_rsa -o StrictHostKeyChecking=no root@${MASTER_NODE} /root/system_info.sh > systeminfo.txt
             tar -czvf systeminfo.txt.tar.gz systeminfo.txt
             if [ "${SKIP_ICP_INSTALL}" != "true" ]; then
-                if ssh -i id_rsa -o StrictHostKeyChecking=no root@${MASTER_NODE} '[ -d ${install_dir}/cluster ]' ;then
+                if ssh -i id_rsa -o StrictHostKeyChecking=no root@${MASTER_NODE} [ -d ${install_dir}/cluster ] ;then
                     scp -i id_rsa -o StrictHostKeyChecking=no ${WORKSPACE}/${PROJECTNAME}/hack/health_check.sh root@${MASTER_NODE}:${install_dir}/cluster/
                     ssh -i id_rsa -o StrictHostKeyChecking=no root@${MASTER_NODE} rm -rf ${install_dir}/cluster/images
                     ssh -i id_rsa -o StrictHostKeyChecking=no root@${MASTER_NODE} ${install_dir}/cluster/health_check.sh

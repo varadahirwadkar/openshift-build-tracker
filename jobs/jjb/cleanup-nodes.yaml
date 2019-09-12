@@ -16,7 +16,7 @@
             echo "Triggering on " + nodeName
             stage("Cleanup docker images") {
                 sh '''
-                      for i in `docker images -q`;do docker rmi $i;done
+                      for i in `docker images -q`;do docker rmi $i || true;done
                 '''
             }
           }
