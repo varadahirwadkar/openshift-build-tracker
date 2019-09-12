@@ -78,8 +78,8 @@ pipeline {
         GLUSTER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "worker"
 
         VIR_CHOSE = "PowerVM"
-        HARDWARE_CHOSE="P8"
-        DISTRO_CHOSE = "RHEL7.6"
+        HARDWARE_CHOSE="P9"
+        DISTRO_CHOSE = "RHEL7.6-ALT"
         DEPLOY_REPO = "daily"
         ICP_VERSION = "latest"
         ICP_FIXPACK = ""

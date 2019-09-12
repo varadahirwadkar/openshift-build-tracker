@@ -13,11 +13,11 @@ storage = "__STORAGE__"
 fvd_user_name = "__FVD_USERNAME__"
 fvd_password = "__FVD_PASSWORD__"
 
-worker = { nodes = "__NUM_OF_WORKERS__", instance_type = "__WORKER_TEMPLATE__", } #instance_type - flavor name
+worker = { nodes = "__NUM_OF_WORKERS__", instance_type = "__WORKER_TEMPLATE__" } #instance_type - flavor name
 master = { instance_type = "__MASTER_TEMPLATE__"} # Single master supported
-management = { nodes = "__NUM_OF_MANAGERS__", instance_type = "__MANAGER_TEMPLATE__", }
-proxy = { nodes = "__NUM_OF_PROXIES__", instance_type = "__PROXY_TEMPLATE__", } # When nodes = "0" master will be used.
-va = { nodes = "__NUM_OF_VA__", instance_type = "__VA_TEMPLATE__", } # When nodes = "0" management will be used. If management nodes = "0" master will be used.
+management = { nodes = "__NUM_OF_MANAGERS__", instance_type = "__MANAGER_TEMPLATE__" }
+proxy = { nodes = "__NUM_OF_PROXIES__", instance_type = "__PROXY_TEMPLATE__" } # When nodes = "0" master will be used.
+va = { nodes = "__NUM_OF_VA__", instance_type = "__VA_TEMPLATE__" } # When nodes = "0" management will be used. If management nodes = "0" master will be used.
 
 enabled_management_services=["__ENABLED_MANAGEMENT_SERVICES__"]
 
