@@ -20,7 +20,7 @@
         sed -i "s|rhel_subscription_password.*=.*$|rhel_subscription_password = ************|g" ${TARGET}.tfvars
         cp ${TARGET}.tfvars powervc.tfvars
     fi
-    if [ $ENV == "ocp" ];then install_dir="/root/" ;else install_dir="/opt/ibm";fi
+    if [ ${OCP_ENV} == true ];then install_dir="/root/" ;else install_dir="/opt/ibm";fi
     MASTER_NODE=$(make terraform:output TERRAFORM_DIR=.${TARGET} TERRAFORM_OUTPUT_VAR=master-node || true)
     [ $? -ne 0 ] && exit 1;
     if [ ! -z "${MASTER_NODE}" ]; then

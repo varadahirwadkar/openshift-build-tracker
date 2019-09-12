@@ -111,8 +111,8 @@ pipeline {
             TERMPLATE_FILE = ".${TARGET}.tfvars.template"
             TASK = "test-icp-daily-online"
             OFFLINE_IMAGE_LOCATION = ""
-            ENV="icp"
-            IMAGE_FILETER = "${ENV == "ocp" ? "openshift":"cicd"}"
+            OCP_ENV = false
+        IMAGE_FILTER = "${OCP_ENV == true ? "openshift" : "cicd"}"
 	 }
 
     stages {

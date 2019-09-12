@@ -123,8 +123,8 @@ pipeline {
         TARGET = "deploy-openshift-powervc"
         TERMPLATE_FILE = ".${TARGET}.tfvars.template"
         OFFLINE_IMAGE_LOCATION = ""
-        ENV="ocp"
-        IMAGE_FILETER = "${ENV == "ocp" ? "openshift":"cicd"}"
+        OCP_ENV = true
+        IMAGE_FILTER = "${OCP_ENV == true ? "openshift" : "cicd"}"
 
 
         //To pick build-harness . Remove once the Makefile.openshift_pvc upstreamed
