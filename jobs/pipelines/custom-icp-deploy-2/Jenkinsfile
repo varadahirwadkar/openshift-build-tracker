@@ -339,7 +339,10 @@ pipeline {
         }
     }
     parameters {
-        choice(name: 'ServerConfig', choices: 'Max\nMin', description: 'Choose The machine configuration(Max: 16cpu, 64G ; Min:2cpu, 16G)')
+        string(defaultValue: '8', description: 'Required Number of VCPUs(master,va,manager)', name: 'VcpusMaster')
+        string(defaultValue: '32', description: 'Required amount Memory(master,va,manager)', name: 'MemMaster')
+        string(defaultValue: '.4', description: 'Required Processing Units(master,va,manager)Specify a value of processor units that is not greater than the value of virtual processors or less than five percent of the value of virtual processors.', name: 'ProUnitMaster')
+        //choice(name: 'ServerConfig', choices: 'Max\nMid\nMin', description: 'Choose The machine configuration(Max: 16cpu, 64G ;Mid: 32G,4cpu, Min:2cpu, 16G)')
         booleanParam(defaultValue: true, name: 'DeployMaster', description: 'Select if you want to Deploy Master node')
         string(defaultValue: '1', description: 'Enter Number of Masters needed', name: 'NumOfMasters')
         booleanParam(defaultValue: false, name: 'DeployVA', description: 'Select if you want to Deploy VA node')
@@ -348,6 +351,9 @@ pipeline {
         booleanParam(defaultValue: false, name: 'DeployProxy', description: 'Select if you want to Deploy Proxy node')
         string(defaultValue: '1', description: 'Enter Number of Proxy Nodes needed', name: 'NumOfProxies')
         booleanParam(defaultValue: false, name: 'DeployWorker', description: 'Select if you want to Deploy Worker node')
+        string(defaultValue: '4', description: 'Required Number of VCPUs(worker, gluster, proxy)', name: 'VcpusWorker')
+        string(defaultValue: '16', description: 'Required amount Memory(worker, gluster, proxy)', name: 'MemWorker')
+        string(defaultValue: '.2', description: 'Required Processing Units(worker, gluster, proxy)Specify a value of processor units that is not greater than the value of virtual processors or less than five percent of the value of virtual processors.', name: 'ProUnitWorker')
         string(defaultValue: '1', description: 'Enter Number of workers needed', name: 'NumOfWorkers')
         booleanParam(defaultValue: false, name: 'EnableGluster', description: 'Select if you want to enable Gluster Persistant storage')
         string(defaultValue: '3', description: 'Enter Number of workers needed', name: 'NumOfGlusters')
@@ -380,17 +386,20 @@ pipeline {
         //Env constants
         FUNCTIONAL_TEST_REPO = "icp-sanity-bats"
         TERRAFORM_VER = "0.11.13"
-        TARGET = "deploy-power-powervc"
+        //TARGET = "deploy-power-powervc"
         TEST_SUITE = "ppc64le-edge"
         OS = "linux"
         OS_IDENTITY_API_VERSION='3'
-        OS_TENANT_NAME="ibm-default"
+        OS_TENANT_NAME="icp-test"
         OS_USER_DOMAIN_NAME="default"
         OS_PROJECT_DOMAIN_NAME="Default"
         OS_COMPUTE_API_VERSION=2.37
         OS_NETWORK_API_VERSION=2.0
         OS_IMAGE_API_VERSION=2
         OS_VOLUME_API_VERSION=2
+
+        ICP_FIXPACK = ""
+        ICP_EDITION = "ee"
         
         VIR_CHOSE = "${params.Virtualization}"
         HARDWARE_CHOSE = "${params.Hardware}"
@@ -401,6 +410,20 @@ pipeline {
         BUILD_TYPE = "${params.Build}"
         ICP_ADDITIONAL_CONFIG = "'${params.ICPConfig}'"
         SERVER_CONFIG = "${params.ServerConfig}"
+
+        VCPUS_REQ_MASTER = "${params.VcpusMaster}"
+        MEM_REQ_MASTER = "${params.MemMaster}"
+        PRO_UNIT_REQ_MASTER = "${params.ProUnitMaster}"
+        VCPUS_REQ_WORKER = "${params.VcpusWorker}"
+        MEM_REQ_WORKER = "${params.MemWorker}"
+        PRO_UNIT_REQ_WORKER = "${params.ProUnitWorker}"
+
+        MASTER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "master"
+        MANAGER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "master"
+        WORKER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "worker"
+        VA_TEMPLATE = "${env.BUILD_TAG}" + "-" + "master"
+        PROXY_TEMPLATE = "${env.BUILD_TAG}" + "-" + "worker"
+        GLUSTER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "worker"
 
         VA = "${params.DeployVA == true ? "enabled"  : "disabled"}"
         ISTIO = "${params.EnableIstio == true ? "enabled"  : "disabled"}"
@@ -420,49 +443,32 @@ pipeline {
         NUM_OF_MANAGERS = "${params.DeployManager == true ? params.NumOfManagers : 0}"
         NUM_OF_PROXIES = "${params.DeployProxy == true ? params.NumOfProxies : 0}"
         NUM_OF_GLUSTERS = "${params.EnableGluster == true ? params.NumOfGlusters : 0}"
+        NUM_OF_VA = "${params.DeployVA == true ? 1 : 0}"
 
-        TASK = "${params.Build == 'Online' ? "test-icp-daily-online" : "test-icp-daily-offline"}"
+        TARGET = "${params.Build == 'Online' ? "deploy-power-powervc" : "deploy-power-powervc-offline"}"
         
         TIMEOUT = "${params.KeepFor}"
         OS_NETWORK = "${params.Network}"
         OS_PRIVATE_NETWORK = "${params.Network}"
         TERMPLATE_FILE = ".${TARGET}.tfvars.template"
         OFFLINE_IMAGE_LOCATION = "https://na.artifactory.swg-devops.com/artifactory/hyc-cloud-private-${DEPLOY_REPO}-generic-local/${BUILD_TYPE}/${ICP_VERSION}/${OFFLINE_TARBALL}"
+        OCP_ENV = false
+        IMAGE_FILTER = "${OCP_ENV == true ? "openshift" : "cicd"}"
 	 }
 
     stages {
-        //Checkout the canary-deployment git repo
-        stage('Clone Canary Deployment') {
+        //Checkout the installer git repo
+        stage('Clone installer') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: '*/deploy-daily-power-pvc']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CheckoutOption', timeout: 60], [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 60], [$class: 'RelativeTargetDirectory', relativeTargetDir: 'canary-deployments'], [$class: 'CleanBeforeCheckout']], submoduleCfg: [], userRemoteConfigs: [[ url: 'git@github.ibm.com:ICP-DevOps/canary-deployments.git', credentialsId: 'ibm-github']]])
                 checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CheckoutOption', timeout: 60], [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 60], [$class: 'RelativeTargetDirectory', relativeTargetDir: 'installer'], [$class: 'CleanBeforeCheckout']], submoduleCfg: [], userRemoteConfigs: [[ url: 'git@github.ibm.com:IBMPrivateCloud/installer.git', credentialsId: 'ibm-github']]])
             }
         }
         stage('Prepare Config') {
             steps {
-                script {
-                    if ( env.SERVER_CONFIG == "Max" )
-                    {
-                        echo "Preparing power config file"
-                        sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/power.config.yaml"
-                        env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/power.config.yaml"
-                        //sh "/usr/local/bin/yj-linux -yc < ${WORKSPACE}/installer/cluster/power.config.yaml > config.tf"
-                    }
-                    else if ( env.SERVER_CONFIG == "Mid" )
-                    {
-                        echo "Preparing power config file"
-                        sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/power.config.yaml"
-                        env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/power.config.yaml"
-                        //sh "/usr/local/bin/yj-linux -yc < ${WORKSPACE}/installer/cluster/power.config.yaml > config.tf"
-                    }
-                    else if ( env.SERVER_CONFIG == "Min" )
-                    {
-                        // Minimum config uses the default (x86's) config file
-                        echo "Preparing power config file"
-                        sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/config.yaml"
-                        env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/config.yaml"
-                        //sh "/usr/local/bin/yj-linux -yc < ${WORKSPACE}/installer/cluster/config.yaml > config.tf"
-                    }
+                script { 
+                    echo "Preparing power config file"
+                    sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/power.config.yaml"
+                    env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/power.config.yaml"
                 }
             }
         }
@@ -474,6 +480,12 @@ pipeline {
                     }
                     try
                     {
+                        MEM_WORKER_GB = MEM_REQ_WORKER.toInteger()
+                        MEM_REQ_WORKER_MB = MEM_WORKER_GB * 1024
+
+                        MEM_MASTER_GB = MEM_REQ_MASTER.toInteger()
+                        MEM_REQ_MASTER_MB = MEM_MASTER_GB * 1024
+                        
                         if (env.DEPLOY_MASTER == "false")
                         {
                             echo "Cluster cant deploy without master"
@@ -490,44 +502,23 @@ pipeline {
                                 echo "Requested zone could not find in ${env.AUTH_URL}"
                                 error('Requested zone could not find')
                             }
-                            env.OS_IMAGE=getTheImage(env.AUTH_URL, env.DISTRO_CHOSE )
+                            env.OS_IMAGE=getTheImage(env.AUTH_URL, env.DISTRO_CHOSE, env.IMAGE_FILTER )
                             env.IMAGE_DISTRO = "${env.DISTRO}"
                             if ("${IMAGE}" == "")
                             {
                                 echo "Requested image could not find in ${env.AUTH_URL}"
                                 error('Requested image could not find')
-
                             }
-                            if ( env.SERVER_CONFIG == "Min" )
+                            status=createTemplate(env.AUTH_URL, env.VCPUS_REQ_MASTER, "${MEM_REQ_MASTER_MB}", env.PRO_UNIT_REQ_MASTER, env.MASTER_TEMPLATE)
+                            if ( status != 0)
                             {
-                                //2*8 > 16vcpus, 16G
-                                env.MASTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
-                                if ("${MASTER}" == null)
-                                {
-                                    echo "Requested template could not find"
-                                    error('Requested zone could not find')
-                                }
-                                env.MANAGER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
-                                env.WORKER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
-                                env.VA_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
-                                env.PROXY_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
-                                env.GLUSTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
-                            } 
-                            else  if ( env.SERVER_CONFIG == "Max" )
-                            {
-                                //16*8 > 128vcpus, 64G
-                                env.MASTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
-                                if ("${MASTER}" == null)
-                                {
-                                    echo "Requested template could not find"
-                                    error('Requested zone could not find')
-                                }
-                                env.MANAGER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
-                                env.WORKER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
-                                env.VA_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
-                                env.PROXY_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
-                                env.GLUSTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
+                                echo "Unable to create template ${env.MASTER_TEMPLATE}"
                             }
+                            status=createTemplate(env.AUTH_URL, VCPUS_REQ_WORKER, "${MEM_REQ_WORKER_MB}", PRO_UNIT_REQ_WORKER, WORKER_TEMPLATE)
+                            if ( status != 0)
+                            {
+                                echo "Unable to create template ${env.WORKER_TEMPLATE}"
+                            }                        
                         } 
                         else if ( env.VIR_CHOSE == "PowerVM" )
                         {
@@ -539,7 +530,7 @@ pipeline {
                                 echo "Requested zone could not find in ${AUTH_URL}"
                                 error('Could not find requesed zone')
                             }
-                            env.OS_IMAGE=getTheImage(env.AUTH_URL, env.DISTRO_CHOSE )
+                            env.OS_IMAGE=getTheImage(env.AUTH_URL, env.DISTRO_CHOSE, env.IMAGE_FILTER )
                             env.IMAGE_DISTRO = "${env.DISTRO}"
                             if ("${IMAGE}" == "")
                             {
@@ -547,44 +538,17 @@ pipeline {
                                 error('Could not find requesed image')
 
                             }
-                            if ( env.SERVER_CONFIG == "Min" )
+                            status=createTemplate(env.AUTH_URL, env.VCPUS_REQ_MASTER, "${MEM_REQ_MASTER_MB}", env.PRO_UNIT_REQ_MASTER, env.MASTER_TEMPLATE)
+                            if ( status != 0)
                             {
-                                //2*8 > 16vcpus, 16G
-                                env.MASTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
-                                if ("${MASTER}" == null)
-                                {
-                                    echo "Requested template could not find"
-                                    error('Requested zone could not find')
-                                }
-                                env.MANAGER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
-                                env.WORKER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
-                                env.VA_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
-                                env.PROXY_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
-                                env.GLUSTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
+                                echo "Unable to create template ${env.MASTER_TEMPLATE}"
                             }
-                            else if ( env.SERVER_CONFIG == "Max" )
+                            status=createTemplate(env.AUTH_URL, VCPUS_REQ_WORKER, "${MEM_REQ_WORKER_MB}", PRO_UNIT_REQ_WORKER, WORKER_TEMPLATE)
+                            if ( status != 0)
                             {
-                                //2*8 > 128vcpus, 64G
-                                env.MASTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MASTER")
-                                if ("${MASTER}" == null)
-                                {
-                                    echo "Requested template could not find"
-                                    error('Requested zone could not find')
-                                }
-                                env.MANAGER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "MANAGER")
-                                env.WORKER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "WORKER")
-                                env.VA_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "VA")
-                                env.PROXY_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "PROXY")
-                                env.GLUSTER_TEMPLATE=getTemplate(env.VIR_CHOSE, env.SERVER_CONFIG, "GLUSTER")
-                            }
+                                echo "Unable to create template ${env.WORKER_TEMPLATE}"
+                            }    
                         }
-                        // Updating tempate file with env variables 
-                        sh """
-                            cd ${WORKSPACE}/deploy && make ${TASK}
-                            cat ${WORKSPACE}/deploy/${TASK}.tfvars.template
-                            cp ${WORKSPACE}/deploy/${TASK}.tfvars.template ${WORKSPACE}/canary-deployments/${TERMPLATE_FILE}
-                        """
-                        sh " cd ${WORKSPACE}/canary-deployments && cat \"${TERMPLATE_FILE}\""
                     }
                     catch (err) 
                     {
@@ -605,7 +569,7 @@ pipeline {
                         sh '''
                         echo 'Initializing supporting repos and keys !'
 
-                        cd ${WORKSPACE}/canary-deployments
+                        cd ${WORKSPACE}/deploy
                         make init
                         make keys
                         make setup-dependencies
@@ -629,15 +593,15 @@ pipeline {
                         sh '''
                         echo 'Deploying Cluster!'
                         export TF_VAR_offline_remote_password=$TF_VAR_password
-                        cd ${WORKSPACE}/canary-deployments
+                        cd ${WORKSPACE}/deploy
                         make VERSION=$ICP_VERSION $TARGET
-                        sleep 600
+                        sleep 60
                         '''
                         }
                     catch (err) {
                         echo 'Error ! Tearing off the cluster !'
-                        getArtifactsAndClean(env.AUTH_URL)
-                        throw err
+                        //getArtifactsAndClean(env.AUTH_URL)
+                        //throw err
                     }
                 }
             }
@@ -652,14 +616,14 @@ pipeline {
                         sh '''
                         echo 'Setting up the kubectl!'
 
-                        cd ${WORKSPACE}/canary-deployments
+                        cd ${WORKSPACE}/deploy
                         make $TARGET:config
                         '''
                         }
                     catch (err) {
                         echo 'Error ! Tearing off the cluster !'
-                        getArtifactsAndClean(env.AUTH_URL)
-                        throw err
+                        //getArtifactsAndClean(env.AUTH_URL)
+                        //throw err
                     }
                 }
             }
@@ -673,7 +637,7 @@ pipeline {
                     try {
                         sh '''
                         echo 'Running SERT test!'
-                        cd ${WORKSPACE}/canary-deployments
+                        cd ${WORKSPACE}/deploy
 
                         make run-functional-tests
                         echo ' SERT Test Completed '
@@ -709,11 +673,10 @@ pipeline {
     }
     post {
         always {
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/systeminfo.txt.tar.gz', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/cluster.tar.gz', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/cluster/config.yaml', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/deploy-power-powervc.tfvars.template', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'canary-deployments/deploy-power-powervc.tfvars', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/systeminfo.txt.tar.gz', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/cluster.tar.gz', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/cluster/config.yaml', fingerprint: true, onlyIfSuccessful: false           
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/powervc.tfvars', fingerprint: true, onlyIfSuccessful: false
             cleanWs()
             //notifyBySlack(currentBuild.result)
         }
