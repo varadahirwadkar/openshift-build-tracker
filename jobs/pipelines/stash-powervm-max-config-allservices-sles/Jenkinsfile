@@ -112,7 +112,7 @@ pipeline {
             TASK = "test-icp-daily-online"
             OFFLINE_IMAGE_LOCATION = ""
             OCP_ENV = false
-        IMAGE_FILTER = "${OCP_ENV == true ? "openshift" : "cicd"}"
+            IMAGE_FILTER = "${OCP_ENV == true ? "openshift" : "cicd"}"
 	 }
 
     stages {

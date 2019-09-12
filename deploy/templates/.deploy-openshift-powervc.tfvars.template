@@ -13,8 +13,12 @@ storage = "__STORAGE__"
 fvd_user_name = "__FVD_USERNAME__"
 fvd_password = "__FVD_PASSWORD__"
 
-worker = { nodes = "__NUM_OF_WORKERS__", instance_type = "__WORKER_TEMPLATE__", rook_size = "__ROOK_DISK_SIZE__"}
-master = { nodes = "__NUM_OF_MASTERS__", instance_type = "__MASTER_TEMPLATE__", rook_size = "__ROOK_DISK_SIZE__"}
+worker = { nodes = "__NUM_OF_WORKERS__", instance_type = "__WORKER_TEMPLATE__", } #instance_type - flavor name
+master = { instance_type = "__MASTER_TEMPLATE__"} # Single master supported
+management = { nodes = "__NUM_OF_MANAGERS__", instance_type = "__MANAGER_TEMPLATE__", }
+proxy = { nodes = "__NUM_OF_PROXIES__", instance_type = "__PROXY_TEMPLATE__", } # When nodes = "0" master will be used.
+va = { nodes = "__NUM_OF_VA__", instance_type = "__VA_TEMPLATE__", } # When nodes = "0" management will be used. If management nodes = "0" master will be used.
+
 enabled_management_services=["__ENABLED_MANAGEMENT_SERVICES__"]
 
 installer_tag= "__ICP_INSTALLER_TAG__"
@@ -29,6 +33,7 @@ rhel_subscription_password = "__REDHAT_PASSWORD__"
 
 verbose = true
 rook_tag =  "v0.8.3"
+rook_size = "__ROOK_DISK_SIZE__"
 skip_icp_install="__SKIP_ICP_INSTALL__"
 
 repo_user = "__ARTIFACTORY_USER__"
