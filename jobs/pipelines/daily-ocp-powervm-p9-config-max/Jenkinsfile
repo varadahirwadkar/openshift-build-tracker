@@ -88,7 +88,7 @@ pipeline {
         SERVER_CONFIG = "Max"
         
         boolean DEPLOY_VA = false
-        boolean DEPLOY_MANAGER = true
+        boolean DEPLOY_MANAGER = false
         boolean DEPLOY_WORKER = true
         boolean DEPLOY_PROXY = false
         boolean ENABLE_GLUSTER = false
