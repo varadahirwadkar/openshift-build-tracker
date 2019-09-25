@@ -96,7 +96,7 @@ pipeline {
             PSN = "enabled"
             MINIO = "disabled"
             KNATIVE = "disabled"
-            GLUSTER_FS = "enabled"
+            GLUSTER_FS = "disabled" //need to enabled this in future
 
             SYSTEM_TUNING = "disabled"
 

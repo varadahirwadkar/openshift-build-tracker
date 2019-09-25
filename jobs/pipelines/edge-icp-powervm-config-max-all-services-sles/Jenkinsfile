@@ -96,9 +96,9 @@ pipeline {
             PSN = "enabled"
             MINIO = "disabled"
             KNATIVE = "disabled"
-            GLUSTER_FS = "enabled"
+            GLUSTER_FS = "disabled"
 
-            SYSTEM_TUNING = "disabled"
+            SYSTEM_TUNING = "disabled" //need to enabled this in future
 
             NUM_OF_WORKERS = "${DEPLOY_WORKER == true ? 1 : 0}"
             NUM_OF_MASTERS = "${DEPLOY_MASTER == true ? 1 : 0}"
