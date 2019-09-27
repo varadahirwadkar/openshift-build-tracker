@@ -257,6 +257,32 @@ pipeline {
                 }
             }
         }
+        stage('Run SERT Test') {
+            when {
+                    expression {
+                        return env.SKIP_ICP_INSTALL != "true";
+                    }
+            }
+            steps {
+                script {
+                    ansiColor('xterm') {
+                        echo ""
+                    }
+                    try {
+                        sh '''
+                        echo 'Running SERT test!'
+                        cd ${WORKSPACE}/deploy
+
+                        make run-functional-tests
+                        '''
+                        }
+                    catch (err) {
+                        echo ' SERT Test Completed '
+                        getArtifactsAndClean(env.AUTH_URL)
+                    }
+                }
+            }
+        }
         stage('Waiting to timeout') {
             steps {
                 script {
