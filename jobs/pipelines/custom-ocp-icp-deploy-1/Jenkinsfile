@@ -436,7 +436,7 @@ pipeline {
         ICP_EDITION = "ee"
         OFFLINE_TARBALL = "${params.Package}"
         BUILD_TYPE = "${params.Build}"
-        ICP_ADDITIONAL_CONFIG = "'${params.ICPConfig}'"
+        ICP_ADDITIONAL_CONFIG = "${params.ICPConfig}"
         SERVER_CONFIG = "${params.ServerConfig}"
 
         VA = "${params.DeployVA == true ? "vulnerability-advisor"  : ""}"
