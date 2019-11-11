@@ -327,6 +327,7 @@ def CONF
 def ICP_CONFIG_FILE
 def MASTER_TEMPLATE
 def IMAGE_DISTRO
+def TAG
 env.DISTRO = ""
 
 pipeline {
@@ -467,8 +468,34 @@ pipeline {
             steps {
                 script { 
                     echo "Preparing power config file"
-                    sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/power.config.yaml"
-                    env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/power.config.yaml"
+                    if ( BUILD_TYPE == "offline")
+                    {
+                        TAG = sh(returnStdout: true, script: "echo ${OFFLINE_TARBALL} | awk 'BEGIN{FS=\"-\"}{print \$5}' | awk 'BEGIN{FS=\".\"}{print \"v\" \$1 \".\" \$2 \".\" \$3}'|tr '\n' ' '").trim()
+                        echo "${TAG}"
+                        sh(returnStdout: false, script: "cd ${WORKSPACE}/installer/ && git checkout tags/${TAG}")
+                    }
+
+                    if ( BUILD_TYPE == "Online")
+                    {
+                        TAG = "v${ICP_VERSION}"
+                        if ( "${ICP_VERSION}"  == "latest")
+                        {
+                            TAG = "v3.2.1"
+                        }
+                        echo "${TAG}"
+
+                        sh(returnStdout: false, script: "cd ${WORKSPACE}/installer/ && git checkout tags/${TAG}")
+                    }
+                    
+                    exists = fileExists "${WORKSPACE}/installer/cluster/power.config.yaml"
+                    if (exists) {
+                        sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/power.config.yaml"
+                        env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/power.config.yaml"
+                    } else {
+                        sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/config.yaml"
+                        env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/config.yaml"
+                    }
+                    
                 }
             }
         }

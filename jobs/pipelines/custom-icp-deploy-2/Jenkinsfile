@@ -327,6 +327,7 @@ def CONF
 def ICP_CONFIG_FILE
 def MASTER_TEMPLATE
 def IMAGE_DISTRO
+def TAG
 env.DISTRO = ""
 
 pipeline {
@@ -397,9 +398,6 @@ pipeline {
         OS_NETWORK_API_VERSION=2.0
         OS_IMAGE_API_VERSION=2
         OS_VOLUME_API_VERSION=2
-
-        ICP_FIXPACK = ""
-        ICP_EDITION = "ee"
         
         VIR_CHOSE = "${params.Virtualization}"
         HARDWARE_CHOSE = "${params.Hardware}"
@@ -446,6 +444,9 @@ pipeline {
         NUM_OF_VA = "${params.DeployVA == true ? 1 : 0}"
 
         TARGET = "${params.Build == 'Online' ? "deploy-power-powervc" : "deploy-power-powervc-offline"}"
+
+        ICP_FIXPACK = ""
+        ICP_EDITION = "ee"
         
         TIMEOUT = "${params.KeepFor}"
         OS_NETWORK = "${params.Network}"
@@ -467,8 +468,34 @@ pipeline {
             steps {
                 script { 
                     echo "Preparing power config file"
-                    sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/power.config.yaml"
-                    env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/power.config.yaml"
+                    if ( BUILD_TYPE == "offline")
+                    {
+                        TAG = sh(returnStdout: true, script: "echo ${OFFLINE_TARBALL} | awk 'BEGIN{FS=\"-\"}{print \$5}' | awk 'BEGIN{FS=\".\"}{print \"v\" \$1 \".\" \$2 \".\" \$3}'|tr '\n' ' '").trim()
+                        echo "${TAG}"
+                        sh(returnStdout: false, script: "cd ${WORKSPACE}/installer/ && git checkout tags/${TAG}")
+                    }
+
+                    if ( BUILD_TYPE == "Online")
+                    {
+                        TAG = "v${ICP_VERSION}"
+                        if ( "${ICP_VERSION}"  == "latest")
+                        {
+                            TAG = "v3.2.1"
+                        }
+                        echo "${TAG}"
+
+                        sh(returnStdout: false, script: "cd ${WORKSPACE}/installer/ && git checkout tags/${TAG}")
+                    }
+                    
+                    exists = fileExists "${WORKSPACE}/installer/cluster/power.config.yaml"
+                    if (exists) {
+                        sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/power.config.yaml"
+                        env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/power.config.yaml"
+                    } else {
+                        sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/config.yaml"
+                        env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/config.yaml"
+                    }
+                    
                 }
             }
         }
