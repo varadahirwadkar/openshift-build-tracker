@@ -652,11 +652,6 @@ pipeline {
                         echo ""
                     }
                     try {
-                        sh '''
-                        echo 'waiting to time out'
-                        '''
-                        }
-                    finally {
                         TIMEOUT_MIN = TIMEOUT.toInteger()
                         if ( TIMEOUT_MIN != 0 )
                         {
@@ -664,6 +659,8 @@ pipeline {
                         }
                         echo "HOLDING THE CLUSTER TEAR DOWN FOR ${TIMEOUT_MIN} MINUTES"
                         sleep TIMEOUT_SEC
+                        }
+                    finally {
                         getArtifactsAndClean(env.AUTH_URL)
                     }
                 }
