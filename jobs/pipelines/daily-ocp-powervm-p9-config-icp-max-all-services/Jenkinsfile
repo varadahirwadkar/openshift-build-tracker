@@ -81,9 +81,9 @@ pipeline {
         HARDWARE_CHOSE="P9"
         DISTRO_CHOSE = "RHEL7.6-ALT"
         DEPLOY_REPO = "daily"
-        ICP_VERSION = "latest"
+        ICP_VERSION = "3.2.2"
         ICP_FIXPACK = ""
-        ICP_EDITION = "ee"
+        ICP_EDITION = ""
         ICP_ADDITIONAL_CONFIG = ""
         SERVER_CONFIG = "Max"
         
@@ -116,7 +116,7 @@ pipeline {
         ICP_CONFIG_FILE="power.openshift.config.yaml"
         SKIP_ICP_INSTALL="false"
         OS_INSTANCE_FLAVOUR="${MASTER_TEMPLATE}"
-        ICP_INSTALLER_TAG="latest"
+        ICP_INSTALLER_TAG="3.2.2"
         STORAGE = "fvd"
         
         TIMEOUT = "0"
