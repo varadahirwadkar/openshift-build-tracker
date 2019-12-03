@@ -424,7 +424,7 @@ deploy-openshift-powervc: %deploy-openshift-powervc:
 		-e "s|__NUM_OF_VA__|$(NUM_OF_VA)|g" -e "s|__VA_TEMPLATE__|$(VA_TEMPLATE)|g" \
         -e "s|__ENABLED_MANAGEMENT_SERVICES__|$(ENABLED_MANAGEMENT_SERVICES)|g" -e "s|__ICP_INSTALLER_TAG__|$(ICP_INSTALLER_TAG)|g" \
 		-e "s|__ICP_CONFIG_FILE__|$(ICP_CONFIG_FILE)|g"  -e "s|__STORAGE__|$(STORAGE)|g" \
-		-e "s|__SKIP_ICP_INSTALL__|$(SKIP_ICP_INSTALL)|g"  \
+		-e "s|__SKIP_ICP_INSTALL__|$(SKIP_ICP_INSTALL)|g" -e "s|__REDHAT_RELEASE__|$(REDHAT_RELEASE)|g" \
         -e "s|__REDHAT_USERNAME__|$(REDHAT_USERNAME)|g" -e "s|__REDHAT_PASSWORD__|$(REDHAT_PASSWORD)|g"  \
         -e "s|__OS_USERNAME__|$(OS_USERNAME)|g" -e "s|__OS_PASSWORD__|$(OS_PASSWORD)|g"  \
 		-e "s|__FVD_USERNAME__|$(FVD_USERNAME)|g" -e "s|__FVD_PASSWORD__|$(FVD_PASSWORD)|g"  \

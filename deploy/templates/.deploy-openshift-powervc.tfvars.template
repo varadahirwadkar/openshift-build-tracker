@@ -31,6 +31,8 @@ __ICP_ADDITIONAL_CONFIG__
 rhel_subscription_username = "__REDHAT_USERNAME__"
 rhel_subscription_password = "__REDHAT_PASSWORD__"
 
+redhat_release = "__REDHAT_RELEASE__"
+
 verbose = true
 rook_tag =  "v0.8.3"
 rook_size = "__ROOK_DISK_SIZE__"
