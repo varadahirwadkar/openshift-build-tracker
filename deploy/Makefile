@@ -416,7 +416,7 @@ deploy-openshift-powervc: %deploy-openshift-powervc:
 	@$(shell sed -e "s|__AUTH_URL__|$(AUTH_URL)|g" -e "s|__OS_TENANT_NAME__|$(OS_TENANT_NAME)|g" \
         -e "s|__AVAILABILITY_ZONE__|$(AVAILABILITY_ZONE)|g" \
         -e "s|__OS_IMAGE__|$(OS_IMAGE)|g" -e "s|__OS_NETWORK__|$(OS_NETWORK)|g" \
-		-e "s|__ROOK_DISK_SIZE__|$(ROOK_DISK_SIZE)|g" \
+		-e "s|__ROOK_DISK_SIZE__|$(ROOK_DISK_SIZE)|g" -e "s|__INSTANCE_NAME__|$(INSTANCE_NAME)|g" \
 		-e "s|__NUM_OF_WORKERS__|$(NUM_OF_WORKERS)|g" -e "s|__WORKER_TEMPLATE__|$(WORKER_TEMPLATE)|g"  \
 		-e "s|__NUM_OF_MASTERS__|$(NUM_OF_MASTERS)|g" -e "s|__MASTER_TEMPLATE__|$(MASTER_TEMPLATE)|g" \
 		-e "s|__NUM_OF_MANAGERS__|$(NUM_OF_MANAGERS)|g" -e "s|__MANAGER_TEMPLATE__|$(MANAGER_TEMPLATE)|g" \

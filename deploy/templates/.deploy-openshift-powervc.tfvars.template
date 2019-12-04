@@ -13,6 +13,8 @@ storage = "__STORAGE__"
 fvd_user_name = "__FVD_USERNAME__"
 fvd_password = "__FVD_PASSWORD__"
 
+prefix = "__INSTANCE_NAME__"
+
 worker = { nodes = "__NUM_OF_WORKERS__", instance_type = "__WORKER_TEMPLATE__" } #instance_type - flavor name
 master = { instance_type = "__MASTER_TEMPLATE__"} # Single master supported
 management = { nodes = "__NUM_OF_MANAGERS__", instance_type = "__MANAGER_TEMPLATE__" }
