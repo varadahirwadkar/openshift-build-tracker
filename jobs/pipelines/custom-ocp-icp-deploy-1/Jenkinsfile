@@ -5,7 +5,7 @@ properties([
     parameters([
         [$class: 'ChoiceParameter', 
             choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the Build from the Dropdown List', 
+            description: 'Select the Type of Build from the Dropdown List', 
             filterLength: 1, 
             filterable: false,
             name: 'Build',
@@ -29,7 +29,34 @@ properties([
 
         [$class: 'CascadeChoiceParameter', 
             choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the Repo from the Dropdown List', 
+            description: 'Select the ICP/Cloudpack version from the Dropdown List', 
+            filterLength: 1, 
+            filterable: false, 
+            name: 'Version', 
+            randomName: 'choice-parameter-7931314456178619', 
+            referencedParameters: 'Repo, Build', 
+            script: [
+                $class: 'GroovyScript', 
+                fallbackScript: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        'return[\'Could not get Environment from Env Param\']'
+                ], 
+                script: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        ''' 
+                        return["3.2.1","3.2.2:selected", "3.2.3"]
+                        '''
+                ]
+            ]
+        ],
+
+        [$class: 'CascadeChoiceParameter', 
+            choiceType: 'PT_SINGLE_SELECT', 
+            description: 'Select the Artifactory Repository from the Dropdown List', 
             filterLength: 1, 
             filterable: false, 
             name: 'Repo',
@@ -54,12 +81,12 @@ properties([
 
         [$class: 'CascadeChoiceParameter', 
             choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the version from the Dropdown List', 
+            description: 'Select the Build directory from the Dropdown List', 
             filterLength: 1, 
             filterable: false, 
-            name: 'Version', 
-            randomName: 'choice-parameter-7931314456178619', 
-            referencedParameters: 'Repo, Build', 
+            name: 'BuildDir', 
+            randomName: 'choice-parameter-7932394656178619', 
+            referencedParameters: 'Repo, Build, Version', 
             script: [
                 $class: 'GroovyScript', 
                 fallbackScript: [
@@ -77,13 +104,7 @@ properties([
                         import jenkins.model.*
                         import com.cloudbees.plugins.credentials.CredentialsProvider
                         import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials
-                        if ( Build.equals("Online") && Repo.equals("edge") || Build.equals("Online") && Repo.equals("stash")){
-                                return["3.2.0","3.2.1","latest:selected"]
-                            }
-                            else if(Build.equals("Online") && Repo.equals("release")){
-                                return["3.1.0","3.1.1","3.1.2","3.2.0","3.2.1:selected"]
-                            }
-                            else if (Build.equals("offline")){
+                        if (Build.equals("offline")){
                                 instance = Jenkins.getInstance()
                                 globalNodeProperties = instance.getGlobalNodeProperties()
                                 def user = ""
@@ -117,7 +138,7 @@ properties([
                             }
                             else 
                             {
-                                return["latest"]
+                                return["Ignore This for Online"]
                             }
 
                         '''
@@ -130,9 +151,9 @@ properties([
             description: 'Select the Tarball from the Dropdown List(NOTE: Ignore for Online deployment)', 
             filterLength: 1, 
             filterable: false, 
-            name: 'Package', 
+            name: 'OfflineImage', 
             randomName: 'choice-parameter-79344564456178619', 
-            referencedParameters: 'Repo, Version, Build', 
+            referencedParameters: 'Repo, Version, Build, BuildDir', 
             script: [
                 $class: 'GroovyScript', 
                 fallbackScript: [
@@ -147,12 +168,16 @@ properties([
                     script: 
                         ''' 
                             import jenkins.model.*
-                            if ( Build.equals("offline") )
-                            {
+                            import hudson.util.Secret
+                            import jenkins.model.*
+                            import com.cloudbees.plugins.credentials.CredentialsProvider
+                            import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials
+
+                            if (Build.equals("offline")){
                                 instance = Jenkins.getInstance()
                                 globalNodeProperties = instance.getGlobalNodeProperties()
-                                def user = ""
-                                def pass = ""
+                                user = ""
+                                pass = ""
                                 globalNodeProperties.each {
                                     envVars = it.getEnvVars()
                                     if (envVars.get('username') != null) {
@@ -162,29 +187,56 @@ properties([
                                         pass = envVars.get('password');
                                     }
                                 }
-                                def command = """ wget  --output-document  -  https://na.artifactory.swg-devops.com/artifactory/hyc-cloud-private-$Repo-generic-local/offline/$Version --http-user ${user} --http-password ${pass}"""
+                                def repo = "https://na.artifactory.swg-devops.com/artifactory/hyc-cloud-private-$Repo-generic-local/offline/$BuildDir/"
+                                links = ''
+                                links = getlinks(repo)
+                                return  links.tokenize()
+                            }
+                            else {
+                                return["Ignore This for Online"]
+                            }
+
+                            def getlinks(repo) {
+                                def repo1 = repo
+                                def links1 = ''
+                                if (repo1.contains("tar.gz")){
+                                    if (repo1.contains("ppc64le")){
+                                        return repo1
+                                    }
+                                }
+                                if (repo1.contains("tar.gz")){
+                                    if ( ! repo1.contains("ppc64le")){
+                                        return
+                                    }
+                                }
+                                if (repo1.contains("zip")){
+                                    return
+                                }
+                                if (repo1.isEmpty()){
+                                    return
+                                }
+                                def command = """ wget  --output-document  - $repo1 --http-user ${user} --http-password ${pass}"""
                                 build = command.execute().text
                                 def min1 = ~/<a href="/
-                                def min3 = ~/">.*/
+                                def min2 = ~/">.*/
+                                def min3 = ~/\\/">.*/
                                 def min4 = ~/\\[/
                                 def ls =''
                                 build.eachLine{
                                     if (it =~ /^<a/) {
                                         String lst = it.findAll(/<a href=".*/)
-                                        if (lst.contains("ppc64le"))
-                                        {
-                                            ls = ls + " " + (lst - min1)
-                                            ls = ls - min3
-                                            ls = ls - min4
-                                        }
+                                                lst = lst - min1
+                                                lst = lst - min2
+                                                lst = lst - min3
+                                                lst = lst - min4
+                                                ls = ls + " " + lst
                                     }
                                 }
-                                bld = ls.split() as List
-                                return bld
-                            }
-                            else 
-                            {
-                                    return["Ignore This for Online"]
+                                for ( String subdir:  ls.split() ){
+                                    repo2 = repo1  + subdir
+                                    links1 = links1 + " " + getlinks(repo2)
+                                }
+                                return links1.trim()
                             }
                         '''
                 ]
@@ -419,6 +471,8 @@ pipeline {
         PRO_UNIT_REQ_WORKER = "${params.ProUnitWorker}"
         STORAGE = "${params.StorageType}"
         ROOK_DISK_SIZE = "${params.RookSize}"
+        BUILD_DIR = "${params.BuildDir  }"
+        OFFLINE_TARBALL_URL = "${params.OfflineImage}"
 
         MASTER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "master"
         MANAGER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "master"
@@ -433,7 +487,7 @@ pipeline {
         DEPLOY_REPO = "${params.Repo}"
         ICP_VERSION = "${params.Version}"
         ICP_FIXPACK = ""
-        ICP_EDITION = "ee"
+        ICP_EDITION = ""
         OFFLINE_TARBALL = "${params.Package}"
         BUILD_TYPE = "${params.Build}"
         ICP_ADDITIONAL_CONFIG = "${params.ICPConfig}"
@@ -472,7 +526,7 @@ pipeline {
         OS_NETWORK = "${params.Network}"
         OS_PRIVATE_NETWORK = "${params.Network}"
         TERMPLATE_FILE = ".${TARGET}.tfvars.template"
-        OFFLINE_IMAGE_LOCATION = "https://na.artifactory.swg-devops.com/artifactory/hyc-cloud-private-${DEPLOY_REPO}-generic-local/${BUILD_TYPE}/${ICP_VERSION}/${OFFLINE_TARBALL}"
+        OFFLINE_REPO = "https://na.artifactory.swg-devops.com/artifactory/hyc-cloud-private-${DEPLOY_REPO}-generic-local/${BUILD_TYPE}/"
         OCP_ENV = true
         IMAGE_FILTER = "${OCP_ENV == true ? "openshift" : "cicd"}"
         ICP_CONFIG_FILE="power.openshift.config.yaml"

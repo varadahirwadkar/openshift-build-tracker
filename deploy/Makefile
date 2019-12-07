@@ -452,6 +452,47 @@ deploy-openshift-powervc\:config:
 deploy-openshift-powervc\:clean:
 	@$(SELF) -s deploy:openshift:powervc:clean OPENSHIFT_POWERVC_DEPLOY_DIR=$(TERRAFORM_DIR) OPENSHIFT_POWERVC_TERRAFORM_VARS_FILE=$(TERRAFORM_VARS_FILE)
 
+.PHONY: deploy-openshift-powervc-offline\:
+## Create power build on powervc tenant
+deploy-openshift-powervc-offline: %deploy-openshift-powervc-offline:
+	@$(shell sed -e "s|__AUTH_URL__|$(AUTH_URL)|g" -e "s|__OS_TENANT_NAME__|$(OS_TENANT_NAME)|g" \
+        -e "s|__AVAILABILITY_ZONE__|$(AVAILABILITY_ZONE)|g" \
+        -e "s|__OS_IMAGE__|$(OS_IMAGE)|g" -e "s|__OS_NETWORK__|$(OS_NETWORK)|g" -e "s|__REDHAT_RELEASE__|$(REDHAT_RELEASE)|g" \
+		-e "s|__ROOK_DISK_SIZE__|$(ROOK_DISK_SIZE)|g" -e "s|__OFFLINE_TARBALL_URL__|$(OFFLINE_TARBALL_URL)|g" \
+		-e "s|__NUM_OF_WORKERS__|$(NUM_OF_WORKERS)|g" -e "s|__WORKER_TEMPLATE__|$(WORKER_TEMPLATE)|g"  \
+		-e "s|__NUM_OF_MASTERS__|$(NUM_OF_MASTERS)|g" -e "s|__MASTER_TEMPLATE__|$(MASTER_TEMPLATE)|g" \
+		-e "s|__NUM_OF_MANAGERS__|$(NUM_OF_MANAGERS)|g" -e "s|__MANAGER_TEMPLATE__|$(MANAGER_TEMPLATE)|g" \
+		-e "s|__NUM_OF_PROXIES__|$(NUM_OF_PROXIES)|g" -e "s|__PROXY_TEMPLATE__|$(PROXY_TEMPLATE)|g" \
+		-e "s|__NUM_OF_VA__|$(NUM_OF_VA)|g" -e "s|__VA_TEMPLATE__|$(VA_TEMPLATE)|g" \
+        -e "s|__ENABLED_MANAGEMENT_SERVICES__|$(ENABLED_MANAGEMENT_SERVICES)|g" -e "s|__ICP_INSTALLER_TAG__|$(ICP_INSTALLER_TAG)|g" \
+		-e "s|__ICP_CONFIG_FILE__|$(ICP_CONFIG_FILE)|g"  -e "s|__STORAGE__|$(STORAGE)|g" \
+		-e "s|__SKIP_ICP_INSTALL__|$(SKIP_ICP_INSTALL)|g" -e "s|__INSTANCE_NAME__|$(INSTANCE_NAME)|g" \
+        -e "s|__REDHAT_USERNAME__|$(REDHAT_USERNAME)|g" -e "s|__REDHAT_PASSWORD__|$(REDHAT_PASSWORD)|g"  \
+        -e "s|__OS_USERNAME__|$(OS_USERNAME)|g" -e "s|__OS_PASSWORD__|$(OS_PASSWORD)|g"  \
+		-e "s|__FVD_USERNAME__|$(FVD_USERNAME)|g" -e "s|__FVD_PASSWORD__|$(FVD_PASSWORD)|g"  \
+        -e "s|__ARTIFACTORY_USER__|$(ARTIFACTORY_USER)|g" -e "s|__ARTIFACTORY_TOKEN__|$(ARTIFACTORY_TOKEN)|g" \
+        -e "s|__REPO__|$(DEPLOY_REPO)|g" templates/$(TERRAFORM_VARS_FILE).template > $(TERRAFORM_VARS_FILE))
+
+	@$(shell ../hack/prepare_template.sh  "$${ICP_ADDITIONAL_CONFIG}" "${TERRAFORM_VARS_FILE}" "${SKIP_ICP_INSTALL}")
+	@$(SELF) -s deploy:openshift:powervc OPENSHIFT_POWERVC_DEPLOY_DIR=$(TERRAFORM_DIR) OPENSHIFT_POWERVC_TERRAFORM_VARS_FILE=$(TERRAFORM_VARS_FILE)
+
+.PHONY: deploy-openshift-powervc-offline\:config
+## Configure kubectl for access to power-openstack build
+deploy-openshift-powervc-offline\:config:
+	@$(SELF) -s cloudctl:config K8S_CLUSTER_NAME=$(shell $(SELF) terraform:output TERRAFORM_OUTPUT_VAR=cluster-name) \
+		K8S_CLUSTER_MASTER_IP=$(shell $(SELF) terraform:output TERRAFORM_OUTPUT_VAR=master-node) \
+		K8S_CLUSTER_MASTER_PORT=$(shell $(SELF) terraform:output TERRAFORM_OUTPUT_VAR=icp-port) \
+		K8S_CLUSTER_USER=$(shell $(SELF) terraform:output TERRAFORM_OUTPUT_VAR=admin-user) \
+		K8S_CLUSTER_PASSWORD=$(shell $(SELF) terraform:output TERRAFORM_OUTPUT_VAR=admin-password) \
+		OPENSHIFT_ICP_CONSOLE=$(shell $(SELF) terraform:output TERRAFORM_OUTPUT_VAR=icp-web-console)
+	@$(SELF) -s helm:init
+	@echo INFO: You can now access your cluster with "kubectl config use-context $(shell $(SELF) terraform:output TERRAFORM_OUTPUT_VAR=cluster-name)"
+	@echo INFO: You can access your cluster web console at $(shell $(SELF) terraform:output TERRAFORM_OUTPUT_VAR=web-console)
+
+.PHONY: deploy-openshift-powervc-offline\:clean
+## Clean up power-openstack build artifacts
+deploy-openshift-powervc-offline\:clean:
+	@$(SELF) -s deploy:openshift:powervc:clean OPENSHIFT_POWERVC_DEPLOY_DIR=$(TERRAFORM_DIR) OPENSHIFT_POWERVC_TERRAFORM_VARS_FILE=$(TERRAFORM_VARS_FILE)
 
 
 
