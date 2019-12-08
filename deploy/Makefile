@@ -915,6 +915,158 @@ deploy-power-powervc-offline\:config:
 deploy-power-powervc-offline\:clean:
 	@$(SELF) -s deploy:powervc:clean POWERVC_DEPLOY_DIR=$(TERRAFORM_DIR) POWERVC_TERRAFORM_VARS_FILE=$(TERRAFORM_VARS_FILE)
 
+# ------------------------------------------------
+## ----- powervc icp release upgrade offline -----
+# ------------------------------------------------
+
+
+
+.PHONY: deploy-power-powervc-base-upgrade\:
+## Create power build on PowerVC tenant
+deploy-power-powervc-base-upgrade: %deploy-power-powervc-base-upgrade:
+	@$(shell sed -e "s|__AUTH_URL__|$(AUTH_URL)|g" -e "s|__OS_TENANT_NAME__|$(OS_TENANT_NAME)|g" \
+        -e "s|__AVAILABILITY_ZONE__|$(AVAILABILITY_ZONE)|g" -e "s|__OS_IMAGE__|$(OS_IMAGE)|g" -e "s|__ROLLBACK__|$(ROLLBACK)|g"\
+        -e "s|__IMAGE_DISTRO__|$(IMAGE_DISTRO)|g" -e "s|__CREATE_STORAGE__|$(CREATE_STORAGE)|g" -e "s|__SYSTEM_TUNING__|$(SYSTEM_TUNING)|g" \
+		-e "s|__SYSTEM_TUNING__|$(SYSTEM_TUNING)|g" -e "s|__NUM_OF_MASTERS__|$(NUM_OF_MASTERS)|g" \
+        -e "s|__NUM_OF_MANAGERS__|$(NUM_OF_MANAGERS)|g" -e "s|__NUM_OF_WORKERS__|$(NUM_OF_WORKERS)|g" \
+        -e "s|__NUM_OF_VA__|$(NUM_OF_VA)|g" -e "s|__NUM_OF_PROXIES__|$(NUM_OF_PROXIES)|g" -e "s|__NUM_OF_GLUSTERS__|$(NUM_OF_GLUSTERS)|g" \
+		-e "s|__ICP_CONFIG_FILE__|$(ICP_CONFIG_FILE)|g" -e "s|__OS_PRIVATE_NETWORK__|$(OS_PRIVATE_NETWORK)|g" \-e "s|__OS_NETWORK__|$(OS_NETWORK)|g"  \
+		-e "s|__VA__|$(VA)|g" -e "s|__ISTIO__|$(ISTIO)|g" -e "s|__GLUSTER_FS__|$(GLUSTER_FS)|g" -e "s|__INSTANCE_NAME__|$(INSTANCE_NAME)|g"\
+        -e "s|__MCM__|$(MCM)|g" -e "s|__PSN__|$(PSN)|g" -e "s|__NPDD__|$(NPDD)|g" -e "s|__REPO__|$(DEPLOY_REPO)|g" \
+		-e "s|__MINIO__|$(MINIO)|g" -e "s|__KNATIVE__|$(KNATIVE)|g" -e "s|__OFFLINE_IMAGE_LOCATION__|$(OFFLINE_IMAGE_LOCATION)|g" \
+        -e "s|__OFFLINE_IMAGE__|$(DEPLOY_REPO)|g" -e "s|__ARTIFACTORY_USER__|$(ARTIFACTORY_USER)|g" \
+        -e "s|__ARTIFACTORY_API_KEY__|$(ARTIFACTORY_TOKEN)|g" -e "s|__MASTER_TEMPLATE__|$(MASTER_TEMPLATE)|g" \
+        -e "s|__MANAGER_TEMPLATE__|$(MANAGER_TEMPLATE)|g" -e "s|__WORKER_TEMPLATE__|$(WORKER_TEMPLATE)|g" -e "s|__VA_TEMPLATE__|$(VA_TEMPLATE)|g" \
+		-e "s|__UPGRADE_IMAGE_LOCATION__|$(BASE_UPGRADE_LOCATION)|g"  \
+        -e "s|__PROXY_TEMPLATE__|$(PROXY_TEMPLATE)|g" -e "s|__GLUSTER_TEMPLATE__|$(GLUSTER_TEMPLATE)|g" templates/$(TERRAFORM_VARS_FILE).template > $(TERRAFORM_VARS_FILE))
+	
+	@echo -e        "\nAUTH_URL" = $(AUTH_URL)\
+        "\nOS_TENANT_NAME" = $(OS_TENANT_NAME)\
+        "\nAVAILABILITY_ZONE" = $(AVAILABILITY_ZONE)\
+        "\nOS_IMAGE" = $(OS_IMAGE)\
+        "\nIMAGE_DISTRO" = $(IMAGE_DISTRO)\
+        "\nNUM_OF_MASTERS" = $(NUM_OF_MASTERS)\
+        "\nNUM_OF_MANAGERS" = $(NUM_OF_MANAGERS)\
+        "\nNUM_OF_WORKERS" = $(NUM_OF_WORKERS)\
+        "\nNUM_OF_VA" = $(NUM_OF_VA)\
+        "\nNUM_OF_PROXIES" = $(NUM_OF_PROXIES)\
+        "\nNUM_OF_GLUSTERS" = $(NUM_OF_GLUSTERS)\
+        "\nCREATE_STORAGE" = $(CREATE_STORAGE)\
+        "\nSYSTEM_TUNING" = $(SYSTEM_TUNING)\
+        "\nICP_CONFIG_FILE" = $(ICP_CONFIG_FILE)\
+        "\nOS_PRIVATE_NETWORK" = $(OS_PRIVATE_NETWORK)\
+        "\nOS_NETWORK" = $(OS_NETWORK)\
+        "\nVA" = $(VA)\
+        "\nISTIO" = $(ISTIO)\
+        "\nGLUSTER_FS" = $(GLUSTER_FS)\
+        "\nMCM" = $(MCM)\
+        "\nPSN" = $(PSN)\
+        "\nNPDD" = $(NPDD)\
+        "\nMINIO" = $(MINIO)\
+        "\nKNATIVE" = $(KNATIVE)\
+        "\nMASTER_TEMPLATE" = $(MASTER_TEMPLATE)\
+        "\nMANAGER_TEMPLATE" = $(MANAGER_TEMPLATE)\
+        "\nWORKER_TEMPLATE" = $(WORKER_TEMPLATE)\
+        "\nVA_TEMPLATE" = $(VA_TEMPLATE)\
+        "\nPROXY_TEMPLATE" = $(PROXY_TEMPLATE)\
+        "\nGLUSTER_TEMPLATE" = $(GLUSTER_TEMPLATE)\
+		"\nOFFLINE_IMAGE_LOCATION" = $(OFFLINE_IMAGE_LOCATION) \
+		"\nUPGRADE_IMAGE_LOCATION" = $(BASE_UPGRADE_LOCATION)
+
+	@$(SELF) -s deploy:powervc POWERVC_DEPLOY_DIR=$(TERRAFORM_DIR) POWERVC_TERRAFORM_VARS_FILE=$(TERRAFORM_VARS_FILE)
+
+.PHONY: deploy-power-powervc-base-upgrade\:config
+## Configure kubectl for access to power-offline build
+deploy-power-powervc-base-upgrade\:config:
+    #@$(SELF) -s kubectl:install
+	@$(SELF) -s kubectl:config K8S_CLUSTER_NAME=$(shell $(SELF) terraform:output TERRAFORM_DIR=$(TERRAFORM_DIR) TERRAFORM_OUTPUT_VAR=cluster-name) K8S_CLUSTER_MASTER_IP=$(shell $(SELF) terraform:output TERRAFORM_DIR=$(TERRAFORM_DIR) TERRAFORM_OUTPUT_VAR=master-node) K8S_CLUSTER_SSH_USER=$(shell $(SELF) terraform:output TERRAFORM_DIR=$(TERRAFORM_DIR) TERRAFORM_OUTPUT_VAR=vm-username)
+	@$(SELF) -s helm:config K8S_CLUSTER_NAME=$(shell $(SELF) terraform:output TERRAFORM_DIR=$(TERRAFORM_DIR) TERRAFORM_OUTPUT_VAR=cluster-name) K8S_CLUSTER_MASTER_IP=$(shell $(SELF) terraform:output TERRAFORM_DIR=$(TERRAFORM_DIR) TERRAFORM_OUTPUT_VAR=master-node) K8S_CLUSTER_SSH_USER=$(shell $(SELF) terraform:output TERRAFORM_DIR=$(TERRAFORM_DIR) TERRAFORM_OUTPUT_VAR=vm-username)
+	@$(SELF) -s helm:init
+	@echo INFO: You can now access your cluster with "kubectl config use-context $(shell $(SELF) terraform:output TERRAFORM_DIR=$(TERRAFORM_DIR) TERRAFORM_OUTPUT_VAR=cluster-name)"
+	@echo INFO: You can access your cluster web console at $(shell $(SELF) terraform:output TERRAFORM_DIR=$(TERRAFORM_DIR) TERRAFORM_OUTPUT_VAR=web-console)
+
+.PHONY: deploy-power-powervc-base-upgrade\:clean
+## Clean up power-offline build artifacts
+deploy-power-powervc-base-upgrade\:clean:
+	@$(SELF) -s deploy:powervc:clean POWERVC_DEPLOY_DIR=$(TERRAFORM_DIR) POWERVC_TERRAFORM_VARS_FILE=$(TERRAFORM_VARS_FILE)
+
+
+# ------------------------------------------------
+## ----- powervc icp fixpack upgrade offline -----
+# ------------------------------------------------
+
+
+
+.PHONY: deploy-power-powervc-fixpack-upgrade\:
+## Create power build on PowerVC tenant
+deploy-power-powervc-fixpack-upgrade: %deploy-power-powervc-fixpack-upgrade:
+	@$(shell sed -e "s|__AUTH_URL__|$(AUTH_URL)|g" -e "s|__OS_TENANT_NAME__|$(OS_TENANT_NAME)|g" \
+        -e "s|__AVAILABILITY_ZONE__|$(AVAILABILITY_ZONE)|g" -e "s|__OS_IMAGE__|$(OS_IMAGE)|g" -e "s|__ROLLBACK__|$(ROLLBACK)|g"\
+        -e "s|__IMAGE_DISTRO__|$(IMAGE_DISTRO)|g" -e "s|__CREATE_STORAGE__|$(CREATE_STORAGE)|g" -e "s|__SYSTEM_TUNING__|$(SYSTEM_TUNING)|g" \
+		-e "s|__SYSTEM_TUNING__|$(SYSTEM_TUNING)|g" -e "s|__NUM_OF_MASTERS__|$(NUM_OF_MASTERS)|g" \
+        -e "s|__NUM_OF_MANAGERS__|$(NUM_OF_MANAGERS)|g" -e "s|__NUM_OF_WORKERS__|$(NUM_OF_WORKERS)|g" \
+        -e "s|__NUM_OF_VA__|$(NUM_OF_VA)|g" -e "s|__NUM_OF_PROXIES__|$(NUM_OF_PROXIES)|g" -e "s|__NUM_OF_GLUSTERS__|$(NUM_OF_GLUSTERS)|g" \
+		-e "s|__ICP_CONFIG_FILE__|$(ICP_CONFIG_FILE)|g" -e "s|__OS_PRIVATE_NETWORK__|$(OS_PRIVATE_NETWORK)|g" \-e "s|__OS_NETWORK__|$(OS_NETWORK)|g"  \
+		-e "s|__VA__|$(VA)|g" -e "s|__ISTIO__|$(ISTIO)|g" -e "s|__GLUSTER_FS__|$(GLUSTER_FS)|g" -e "s|__INSTANCE_NAME__|$(INSTANCE_NAME)|g"\
+        -e "s|__MCM__|$(MCM)|g" -e "s|__PSN__|$(PSN)|g" -e "s|__NPDD__|$(NPDD)|g" -e "s|__REPO__|$(DEPLOY_REPO)|g" \
+		-e "s|__MINIO__|$(MINIO)|g" -e "s|__KNATIVE__|$(KNATIVE)|g" -e "s|__OFFLINE_IMAGE_LOCATION__|$(OFFLINE_IMAGE_LOCATION)|g" \
+        -e "s|__OFFLINE_IMAGE__|$(DEPLOY_REPO)|g" -e "s|__ARTIFACTORY_USER__|$(ARTIFACTORY_USER)|g" \
+        -e "s|__ARTIFACTORY_API_KEY__|$(ARTIFACTORY_TOKEN)|g" -e "s|__MASTER_TEMPLATE__|$(MASTER_TEMPLATE)|g" \
+        -e "s|__MANAGER_TEMPLATE__|$(MANAGER_TEMPLATE)|g" -e "s|__WORKER_TEMPLATE__|$(WORKER_TEMPLATE)|g" -e "s|__VA_TEMPLATE__|$(VA_TEMPLATE)|g" \
+		-e "s|__FIXPACK_DOWNLOAD_LOCATIONS__|$(FIXPACK_DOWNLOAD_LOCATIONS)|g" \
+        -e "s|__PROXY_TEMPLATE__|$(PROXY_TEMPLATE)|g" -e "s|__GLUSTER_TEMPLATE__|$(GLUSTER_TEMPLATE)|g" templates/$(TERRAFORM_VARS_FILE).template > $(TERRAFORM_VARS_FILE))
+	
+	@echo -e        "\nAUTH_URL" = $(AUTH_URL)\
+        "\nOS_TENANT_NAME" = $(OS_TENANT_NAME)\
+        "\nAVAILABILITY_ZONE" = $(AVAILABILITY_ZONE)\
+        "\nOS_IMAGE" = $(OS_IMAGE)\
+        "\nIMAGE_DISTRO" = $(IMAGE_DISTRO)\
+        "\nNUM_OF_MASTERS" = $(NUM_OF_MASTERS)\
+        "\nNUM_OF_MANAGERS" = $(NUM_OF_MANAGERS)\
+        "\nNUM_OF_WORKERS" = $(NUM_OF_WORKERS)\
+        "\nNUM_OF_VA" = $(NUM_OF_VA)\
+        "\nNUM_OF_PROXIES" = $(NUM_OF_PROXIES)\
+        "\nNUM_OF_GLUSTERS" = $(NUM_OF_GLUSTERS)\
+        "\nCREATE_STORAGE" = $(CREATE_STORAGE)\
+        "\nSYSTEM_TUNING" = $(SYSTEM_TUNING)\
+        "\nICP_CONFIG_FILE" = $(ICP_CONFIG_FILE)\
+        "\nOS_PRIVATE_NETWORK" = $(OS_PRIVATE_NETWORK)\
+        "\nOS_NETWORK" = $(OS_NETWORK)\
+        "\nVA" = $(VA)\
+        "\nISTIO" = $(ISTIO)\
+        "\nGLUSTER_FS" = $(GLUSTER_FS)\
+        "\nMCM" = $(MCM)\
+        "\nPSN" = $(PSN)\
+        "\nNPDD" = $(NPDD)\
+        "\nMINIO" = $(MINIO)\
+        "\nKNATIVE" = $(KNATIVE)\
+        "\nMASTER_TEMPLATE" = $(MASTER_TEMPLATE)\
+        "\nMANAGER_TEMPLATE" = $(MANAGER_TEMPLATE)\
+        "\nWORKER_TEMPLATE" = $(WORKER_TEMPLATE)\
+        "\nVA_TEMPLATE" = $(VA_TEMPLATE)\
+        "\nPROXY_TEMPLATE" = $(PROXY_TEMPLATE)\
+        "\nGLUSTER_TEMPLATE" = $(GLUSTER_TEMPLATE) \
+		"\nOFFLINE_IMAGE_LOCATION" = $(OFFLINE_IMAGE_LOCATION) \
+		"\nFIXPACK_DOWNLOAD_LOCATION" = $(FIXPACK_DOWNLOAD_LOCATIONS)
+
+	@$(SELF) -s deploy:powervc POWERVC_DEPLOY_DIR=$(TERRAFORM_DIR) POWERVC_TERRAFORM_VARS_FILE=$(TERRAFORM_VARS_FILE)
+
+.PHONY: deploy-power-powervc-fixpack-upgrade\:config
+## Configure kubectl for access to power-offline build
+deploy-power-powervc-fixpack-upgrade\:config:
+    #@$(SELF) -s kubectl:install
+	@$(SELF) -s kubectl:config K8S_CLUSTER_NAME=$(shell $(SELF) terraform:output TERRAFORM_DIR=$(TERRAFORM_DIR) TERRAFORM_OUTPUT_VAR=cluster-name) K8S_CLUSTER_MASTER_IP=$(shell $(SELF) terraform:output TERRAFORM_DIR=$(TERRAFORM_DIR) TERRAFORM_OUTPUT_VAR=master-node) K8S_CLUSTER_SSH_USER=$(shell $(SELF) terraform:output TERRAFORM_DIR=$(TERRAFORM_DIR) TERRAFORM_OUTPUT_VAR=vm-username)
+	@$(SELF) -s helm:config K8S_CLUSTER_NAME=$(shell $(SELF) terraform:output TERRAFORM_DIR=$(TERRAFORM_DIR) TERRAFORM_OUTPUT_VAR=cluster-name) K8S_CLUSTER_MASTER_IP=$(shell $(SELF) terraform:output TERRAFORM_DIR=$(TERRAFORM_DIR) TERRAFORM_OUTPUT_VAR=master-node) K8S_CLUSTER_SSH_USER=$(shell $(SELF) terraform:output TERRAFORM_DIR=$(TERRAFORM_DIR) TERRAFORM_OUTPUT_VAR=vm-username)
+	@$(SELF) -s helm:init
+	@echo INFO: You can now access your cluster with "kubectl config use-context $(shell $(SELF) terraform:output TERRAFORM_DIR=$(TERRAFORM_DIR) TERRAFORM_OUTPUT_VAR=cluster-name)"
+	@echo INFO: You can access your cluster web console at $(shell $(SELF) terraform:output TERRAFORM_DIR=$(TERRAFORM_DIR) TERRAFORM_OUTPUT_VAR=web-console)
+
+.PHONY: deploy-power-powervc-fixpack-upgrade\:clean
+## Clean up power-offline build artifacts
+deploy-power-powervc-fixpack-upgrade\:clean:
+	@$(SELF) -s deploy:powervc:clean POWERVC_DEPLOY_DIR=$(TERRAFORM_DIR) POWERVC_TERRAFORM_VARS_FILE=$(TERRAFORM_VARS_FILE)
+
+
 
 # ---------------------------------
 ## ----- openshift-aws-offline -----

@@ -52,7 +52,7 @@ pipeline {
         TEST_SUITE = "ppc64le-edge"
         OS = "linux"
         OS_IDENTITY_API_VERSION='3'
-        OS_TENANT_NAME="icp-test"
+        OS_TENANT_NAME="ibm-default"
         OS_USER_DOMAIN_NAME="default"
         OS_PROJECT_DOMAIN_NAME="Default"
         OS_COMPUTE_API_VERSION=2.37
