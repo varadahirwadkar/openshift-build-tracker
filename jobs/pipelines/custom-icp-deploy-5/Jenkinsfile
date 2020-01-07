@@ -586,6 +586,35 @@ properties([
                 ]
             ]
         ],
+
+        [$class: 'CascadeChoiceParameter', 
+            choiceType: 'PT_CHECKBOX', 
+            description: 'Check if rollback is needed', 
+            filterLength: 1, 
+            filterable: false, 
+            name: 'Rollback', 
+            randomName: 'choice-parameter-5611213455378619', 
+            referencedParameters: 'DeploymentType', 
+            script: [
+                $class: 'GroovyScript', 
+                fallbackScript: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        'return[\'Could not get Environment from Env Param\']'
+                ], 
+                script: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        ''' if ( DeploymentType.equals("BaseUpgrade") ||  DeploymentType.equals("FixpackUpgrade")){
+                                return["DoRollBack"]
+                            }
+                        '''
+                ]
+            ]
+        ],
+
         [$class: 'ChoiceParameter', 
             choiceType: 'PT_SINGLE_SELECT', 
             description: 'Select the Operating System from the Dropdown List', 
@@ -817,7 +846,7 @@ pipeline {
         UPGRADE_ICP_VERSION = "${params.UpgradeVersion}"
         UPGRADE_OFFLINE_TARBALL = "${params.UpgradePackage}"
         RELEASED_FIXPACK_LOCS = "${params.ReleasedFixpackPackages}"
-        ROLLBACK = "false"
+        boolean ROLL_BACK = "${params.Rollback == 'DoRollBack' ? "true" : "false"}"
 
         MASTER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "master"
         MANAGER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "master"

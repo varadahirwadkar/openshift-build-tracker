@@ -47,7 +47,7 @@ offline_remote_password = "__ARTIFACTORY_API_KEY__"
 
 fixpack_download_locations = [__FIXPACK_DOWNLOAD_LOCATIONS__]
 
-icp_rollback = "__ROLLBACK__"
+icp_rollback = "__ROLL_BACK__"
 
 icp_version = ""
 icp_configuration = {
