@@ -209,6 +209,16 @@ properties([
                                         return
                                     }
                                 }
+				if (repo1.contains("tgz")){
+                                    if (repo1.contains("ppc64le")){
+                                        return repo1
+                                    }
+                                }
+                                if (repo1.contains("tgz")){
+                                    if ( ! repo1.contains("ppc64le")){
+                                        return
+                                    }
+                                }
                                 if (repo1.contains("zip")){
                                     return
                                 }
