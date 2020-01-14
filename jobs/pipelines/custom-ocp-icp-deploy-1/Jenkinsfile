@@ -209,7 +209,7 @@ properties([
                                         return
                                     }
                                 }
-				if (repo1.contains("tgz")){
+				                if (repo1.contains("tgz")){
                                     if (repo1.contains("ppc64le")){
                                         return repo1
                                     }
@@ -484,6 +484,7 @@ pipeline {
         BUILD_DIR = "${params.BuildDir  }"
         OFFLINE_TARBALL_URL = "${params.OfflineImage}"
 
+
         MASTER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "master"
         MANAGER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "master"
         WORKER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "worker"
@@ -558,6 +559,12 @@ pipeline {
                     wrap([$class: 'BuildUser']) {
                         env.INSTANCE_NAME = "${BUILD_USER_FIRST_NAME}"
                         env.INSTANCE_NAME = env.INSTANCE_NAME.toLowerCase()
+                    }
+                    if (params.OfflineImage.contains("mcm")){
+                        env.INCEPTION_IMAGE = "mcm-inception-ppc64le"
+                    }
+                    else{
+                        env.INCEPTION_IMAGE = "icp-inception-ppc64le"
                     }
                     try
                     {

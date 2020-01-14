@@ -45,7 +45,7 @@ repo_token = "__ARTIFACTORY_TOKEN__"
 
 private_registry_server = "hyc-cloud-private-__REPO__-docker-local.artifactory.swg-devops.com"
 image_repo = "hyc-cloud-private-__REPO__-docker-local.artifactory.swg-devops.com/ibmcom-ppc64le"
-installer_image = "icp-inception-ppc64le"
+installer_image = "__INCEPTION_IMAGE__"
 
 offline_tarball_url = "__OFFLINE_TARBALL_URL__"
 

@@ -456,7 +456,7 @@ deploy-openshift-powervc\:clean:
 ## Create power build on powervc tenant
 deploy-openshift-powervc-offline: %deploy-openshift-powervc-offline:
 	@$(shell sed -e "s|__AUTH_URL__|$(AUTH_URL)|g" -e "s|__OS_TENANT_NAME__|$(OS_TENANT_NAME)|g" \
-        -e "s|__AVAILABILITY_ZONE__|$(AVAILABILITY_ZONE)|g" \
+        -e "s|__AVAILABILITY_ZONE__|$(AVAILABILITY_ZONE)|g" -e "s|__INCEPTION_IMAGE__|$(INCEPTION_IMAGE)|g" \
         -e "s|__OS_IMAGE__|$(OS_IMAGE)|g" -e "s|__OS_NETWORK__|$(OS_NETWORK)|g" -e "s|__REDHAT_RELEASE__|$(REDHAT_RELEASE)|g" \
 		-e "s|__ROOK_DISK_SIZE__|$(ROOK_DISK_SIZE)|g" -e "s|__OFFLINE_TARBALL_URL__|$(OFFLINE_TARBALL_URL)|g" \
 		-e "s|__NUM_OF_WORKERS__|$(NUM_OF_WORKERS)|g" -e "s|__WORKER_TEMPLATE__|$(WORKER_TEMPLATE)|g"  \
