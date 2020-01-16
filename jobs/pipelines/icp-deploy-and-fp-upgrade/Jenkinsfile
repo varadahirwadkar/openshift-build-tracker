@@ -3,108 +3,108 @@
 //Get Infra and OS from user
 properties([
     parameters([
-        [$class: 'ChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the Deploymnet Type from the Dropdown List', 
-            filterLength: 1, 
+        [$class: 'ChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the Deploymnet Type.[ On-Time-Upgrade : Base version + upgrade to base/FP version, Multi-Level-FP-Upgrade : Base version + upgrade to GA'd FP version + upgrade to FP version.]',
+            filterLength: 1,
             filterable: false,
             name: 'DeploymentType',
             randomName: 'choice-parameter-665588144396876978',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Env\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        'return["BaseDeploy:selected","OfflineDirect","BaseUpgrade","FixpackUpgrade"]'
+                    classpath: [],
+                    sandbox: false,
+                    script:
+                        'return["BaseDeploy:selected","One-Time-Upgrade","Multi-Level-FP-Upgrade"]'
                 ]
             ]
-        ], 
+        ],
 
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the Build from the Dropdown List', 
-            filterLength: 1, 
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the Build from the Dropdown List',
+            filterLength: 1,
             filterable: false,
             name: 'Build',
             referencedParameters: 'DeploymentType',
             randomName: 'choice-parameter-66333314439613978',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Env\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         '''
-                        if ( DeploymentType.equals("BaseUpgrade") || DeploymentType.equals("OfflineDirect") || DeploymentType.equals("FixpackUpgrade")) {
+                        if ( DeploymentType.equals("One-Time-Upgrade") || DeploymentType.equals("Multi-Level-FP-Upgrade")) {
                             return ["offline"]
                         }
-                        else { 
+                        else {
                             return["Online:selected","offline"]
                         }
                     '''
                 ]
             ]
-        ], 
+        ],
 
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the Repo from the Dropdown List', 
-            filterLength: 1, 
-            filterable: false, 
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the Repo from the Dropdown List',
+            filterLength: 1,
+            filterable: false,
             name: 'Repo',
             randomName: 'choice-parameter-6631314439613978',
             referencedParameters: 'Build',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Env\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return["daily","edge","stash","stable","release"]'
                 ]
             ]
-        ], 
+        ],
 
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the version from the Dropdown List', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'Version', 
-            randomName: 'choice-parameter-7931314456178619', 
-            referencedParameters: 'Repo, Build', 
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the version from the Dropdown List',
+            filterLength: 1,
+            filterable: false,
+            name: 'Version',
+            randomName: 'choice-parameter-7931314456178619',
+            referencedParameters: 'Repo, Build',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Environment from Env Param\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        ''' 
+                    classpath: [],
+                    sandbox: false,
+                    script:
+                        '''
                         import hudson.util.Secret
                         import jenkins.model.*
                         import com.cloudbees.plugins.credentials.CredentialsProvider
@@ -147,7 +147,7 @@ properties([
                                 bld = ls.split() as List
                                 return bld
                             }
-                            else 
+                            else
                             {
                                 return["latest"]
                             }
@@ -157,27 +157,27 @@ properties([
             ]
         ],
 
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the Tarball from the Dropdown List(NOTE: Ignore for Online deployment)', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'Package', 
-            randomName: 'choice-parameter-79344564456178619', 
-            referencedParameters: 'Repo, Version, Build', 
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the Tarball from the Dropdown List(NOTE: Ignore for Online deployment)',
+            filterLength: 1,
+            filterable: false,
+            name: 'Package',
+            randomName: 'choice-parameter-79344564456178619',
+            referencedParameters: 'Repo, Version, Build',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Environment from Env Param\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        ''' 
+                    classpath: [],
+                    sandbox: false,
+                    script:
+                        '''
                             import jenkins.model.*
                             if ( Build.equals("offline") )
                             {
@@ -214,7 +214,7 @@ properties([
                                 bld = ls.split() as List
                                 return bld
                             }
-                            else 
+                            else
                             {
                                     return [\'NOTAPPLICABLE\']
                             }
@@ -225,35 +225,35 @@ properties([
 
 
 
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_MULTI_SELECT', 
-            description: 'Select the upgrade release version from the Dropdown List', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'ReleasedFixpackVersions', 
-            randomName: 'choice-parameter-14444888456178619', 
-            referencedParameters: 'UpgradeRepo, UpgradeBuild, DeploymentType', 
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_MULTI_SELECT',
+            description: 'Select the upgrade release version from the Dropdown List',
+            filterLength: 1,
+            filterable: false,
+            name: 'ReleasedFixpackVersions',
+            randomName: 'choice-parameter-14444888456178619',
+            referencedParameters: 'UpgradeRepo, UpgradeBuild, DeploymentType',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Environment from Env Param\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        ''' 
+                    classpath: [],
+                    sandbox: false,
+                    script:
+                        '''
                         import hudson.util.Secret
                         import jenkins.model.*
                         import com.cloudbees.plugins.credentials.CredentialsProvider
                         import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials
-                        if ( DeploymentType.equals("BaseDeploy") || DeploymentType.equals("OfflineDirect")){
+                        if ( DeploymentType.equals("BaseDeploy")){
                             return ["NOTAPPLICABLE"]
                         }
-                        else if ( DeploymentType.equals("FixpackUpgrade")) {
+                        else if ( DeploymentType.equals("Multi-Level-FP-Upgrade")) {
                                 instance = Jenkins.getInstance()
                                 globalNodeProperties = instance.getGlobalNodeProperties()
                                 def user = ""
@@ -284,7 +284,7 @@ properties([
                                 }
                                 bld = ls.split() as List
                                 return bld
-                            
+
                         }
                         '''
                 ]
@@ -294,35 +294,35 @@ properties([
 
 
 
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_MULTI_SELECT', 
-            description: 'Select the upgrade released packages from the Dropdown List', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'ReleasedFixpackPackages', 
-            randomName: 'choice-parameter-74444888856278619', 
-            referencedParameters: 'UpgradeRepo, UpgradeBuild, DeploymentType, ReleasedFixpackVersions', 
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_MULTI_SELECT',
+            description: 'Select the upgrade released packages from the Dropdown List',
+            filterLength: 1,
+            filterable: false,
+            name: 'ReleasedFixpackPackages',
+            randomName: 'choice-parameter-74444888856278619',
+            referencedParameters: 'UpgradeRepo, UpgradeBuild, DeploymentType, ReleasedFixpackVersions',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Environment from Env Param\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        ''' 
+                    classpath: [],
+                    sandbox: false,
+                    script:
+                        '''
                         import hudson.util.Secret
                         import jenkins.model.*
                         import com.cloudbees.plugins.credentials.CredentialsProvider
                         import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials
-                        if ( DeploymentType.equals("BaseDeploy") || DeploymentType.equals("OfflineDirect")){
+                        if ( DeploymentType.equals("BaseDeploy")){
                             return ["NOTAPPLICABLE"]
                         }
-                        else if ( DeploymentType.equals("FixpackUpgrade")) {
+                        else if ( DeploymentType.equals("Multi-Level-FP-Upgrade")) {
                                 instance = Jenkins.getInstance()
                                 globalNodeProperties = instance.getGlobalNodeProperties()
                                 def user = ""
@@ -337,10 +337,10 @@ properties([
                                         pass = envVars.get('password');
                                     }
                                 }
-                                
+
                                 String[] test = ReleasedFixpackVersions.split(',') as List
-                                def test2 = ''   
-                                def bld2 = ''                         
+                                def test2 = ''
+                                def bld2 = ''
 
                                 for ( item in test ) {
                                 def command = """ wget  --output-document  -  https://na.artifactory.swg-devops.com/artifactory/hyc-cloud-private-release-generic-local/offline/$item --http-user ${user} --http-password ${pass}"""
@@ -371,100 +371,100 @@ properties([
             ]
         ],
 
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the Upgrade Build from the Dropdown List', 
-            filterLength: 1, 
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the Upgrade Build from the Dropdown List',
+            filterLength: 1,
             filterable: false,
             name: 'UpgradeBuild',
             referencedParameters: 'DeploymentType',
             randomName: 'choice-parameter-79344444456178619',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Env\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                     '''
-                        if ( DeploymentType.equals("BaseDeploy") || DeploymentType.equals("OfflineDirect")) {
+                        if ( DeploymentType.equals("BaseDeploy")) {
                             return ["NOTAPPLICABLE"]
                         }
-                        else if ( DeploymentType.equals("BaseUpgrade") || DeploymentType.equals("OfflineDirect") || DeploymentType.equals("FixpackUpgrade")) {
+                        else if ( DeploymentType.equals("One-Time-Upgrade") || DeploymentType.equals("Multi-Level-FP-Upgrade")) {
                             return["offline"]
                         }
-                        else { 
+                        else {
                             return["Online:selected","offline"]
                         }
                     '''
                 ]
             ]
-        ], 
+        ],
 
 
 
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the Upgrade image repo from the Dropdown List', 
-            filterLength: 1, 
-            filterable: false, 
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the Upgrade image repo from the Dropdown List',
+            filterLength: 1,
+            filterable: false,
             name: 'UpgradeRepo',
             randomName: 'choice-parameter-1119444444456178619',
             referencedParameters: 'DeploymentType',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Env\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         '''
-                        if ( DeploymentType.equals("BaseDeploy") || DeploymentType.equals("OfflineDirect")){
+                        if ( DeploymentType.equals("BaseDeploy")){
                             return [\'NOTAPPLICABLE\']}
-                        else { 
+                        else {
                             return["daily","edge","stash","stable","release"]}
                         '''
                 ]
             ]
-        ], 
+        ],
 
 
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the upgrade version from the Dropdown List', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'UpgradeVersion', 
-            randomName: 'choice-parameter-14444444456178619', 
-            referencedParameters: 'UpgradeRepo, UpgradeBuild, DeploymentType', 
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the upgrade version from the Dropdown List',
+            filterLength: 1,
+            filterable: false,
+            name: 'UpgradeVersion',
+            randomName: 'choice-parameter-14444444456178619',
+            referencedParameters: 'UpgradeRepo, UpgradeBuild, DeploymentType',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Environment from Env Param\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        ''' 
+                    classpath: [],
+                    sandbox: false,
+                    script:
+                        '''
                         import hudson.util.Secret
                         import jenkins.model.*
                         import com.cloudbees.plugins.credentials.CredentialsProvider
                         import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials
-                        if ( DeploymentType.equals("BaseDeploy") || DeploymentType.equals("OfflineDirect")){
+                        if ( DeploymentType.equals("BaseDeploy")){
                             return ["NOTAPPLICABLE"]
                         }
                         else {
@@ -506,7 +506,7 @@ properties([
                                 bld = ls.split() as List
                                 return bld
                             }
-                            else 
+                            else
                             {
                                 return["latest"]
                             }
@@ -516,29 +516,29 @@ properties([
             ]
         ],
 
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the Tarball from the Dropdown List(NOTE: Ignore for Online deployment)', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'UpgradePackage', 
-            randomName: 'choice-parameter-999445444456178619', 
-            referencedParameters: 'UpgradeRepo, UpgradeVersion, UpgradeBuild, DeploymentType', 
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the Tarball from the Dropdown List(NOTE: Ignore for Online deployment)',
+            filterLength: 1,
+            filterable: false,
+            name: 'UpgradePackage',
+            randomName: 'choice-parameter-999445444456178619',
+            referencedParameters: 'UpgradeRepo, UpgradeVersion, UpgradeBuild, DeploymentType',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Environment from Env Param\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        ''' 
+                    classpath: [],
+                    sandbox: false,
+                    script:
+                        '''
                             import jenkins.model.*
-                            if ( DeploymentType.equals("BaseDeploy") || DeploymentType.equals("OfflineDirect")){
+                            if ( DeploymentType.equals("BaseDeploy")){
                                 return ["NOTAPPLICABLE"]
                             }
                             else {
@@ -577,7 +577,7 @@ properties([
                                     bld = ls.split() as List
                                     return bld
                                 }
-                                else 
+                                else
                                 {
                                         return ["NOTAPPLICABLE"]
                                 }
@@ -587,27 +587,27 @@ properties([
             ]
         ],
 
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_CHECKBOX', 
-            description: 'Check if rollback is needed', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'Rollback', 
-            randomName: 'choice-parameter-5611213455378619', 
-            referencedParameters: 'DeploymentType', 
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_CHECKBOX',
+            description: 'Check if rollback is needed',
+            filterLength: 1,
+            filterable: false,
+            name: 'Rollback',
+            randomName: 'choice-parameter-5611213455378619',
+            referencedParameters: 'DeploymentType',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Environment from Env Param\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        ''' if ( DeploymentType.equals("BaseUpgrade") ||  DeploymentType.equals("FixpackUpgrade")){
+                    classpath: [],
+                    sandbox: false,
+                    script:
+                        ''' if ( DeploymentType.equals("One-Time-Upgrade") ||  DeploymentType.equals("Multi-Level-FP-Upgrade")){
                                 return["DoRollBack"]
                             }
                         '''
@@ -615,49 +615,49 @@ properties([
             ]
         ],
 
-        [$class: 'ChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the Operating System from the Dropdown List', 
-            filterLength: 1, 
-            filterable: false, 
+        [$class: 'ChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the Operating System from the Dropdown List',
+            filterLength: 1,
+            filterable: false,
             name: 'Virtualization',
-            randomName: 'choice-parameter-5631314439613978', 
+            randomName: 'choice-parameter-5631314439613978',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Env\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return["KVM","PowerVM:selected"]'
                 ]
             ]
-        ], 
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the Server from the Dropdown List', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'Hardware', 
-            randomName: 'choice-parameter-5631314456178619', 
-            referencedParameters: 'Virtualization', 
+        ],
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the Server from the Dropdown List',
+            filterLength: 1,
+            filterable: false,
+            name: 'Hardware',
+            randomName: 'choice-parameter-5631314456178619',
+            referencedParameters: 'Virtualization',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Environment from Env Param\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         ''' if (Virtualization.equals("KVM")){
                                 return["P9","P8:selected"]
                             }
@@ -668,26 +668,26 @@ properties([
                 ]
             ]
         ],
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the Server from the Dropdown List', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'Operatingsystem', 
-            randomName: 'choice-parameter-5631314456178610', 
-            referencedParameters: 'Hardware, Virtualization', 
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the Server from the Dropdown List',
+            filterLength: 1,
+            filterable: false,
+            name: 'Operatingsystem',
+            randomName: 'choice-parameter-5631314456178610',
+            referencedParameters: 'Hardware, Virtualization',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Environment from Env Param\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         ''' if (Hardware.equals("P8") && Virtualization.equals("KVM")){
                                 return["RHEL7.6","RHEL7.5","UBUNTU18.04","UBUNTU16.04","SLES12SP4","SLES12SP3"]
                             }
@@ -704,26 +704,26 @@ properties([
                 ]
             ]
         ],
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the network from the Dropdown List(preferably icp_network1..(icp_network:181(VLAN=2079))icp_network1:64(VLAND:2230))', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'Network', 
-            randomName: 'choice-parameter-563131889956178610', 
-            referencedParameters: 'Virtualization', 
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the network from the Dropdown List(preferably icp_network1..(icp_network:181(VLAN=2079))icp_network1:64(VLAND:2230))',
+            filterLength: 1,
+            filterable: false,
+            name: 'Network',
+            randomName: 'choice-parameter-563131889956178610',
+            referencedParameters: 'Virtualization',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Environment from Env Param\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         ''' if (Virtualization.equals("KVM")){
                                 return["icp_network"]
                             }
@@ -822,7 +822,7 @@ pipeline {
         OS_NETWORK_API_VERSION=2.0
         OS_IMAGE_API_VERSION=2
         OS_VOLUME_API_VERSION=2
-        
+
         VIR_CHOSE = "${params.Virtualization}"
         HARDWARE_CHOSE = "${params.Hardware}"
         DISTRO_CHOSE = "${params.Operatingsystem}"
@@ -874,18 +874,18 @@ pipeline {
         NUM_OF_PROXIES = "${params.DeployProxy == true ? params.NumOfProxies : 0}"
         NUM_OF_GLUSTERS = "${params.EnableGluster == true ? params.NumOfGlusters : 0}"
         NUM_OF_VA = "${params.DeployVA == true ? 1 : 0}"
-        TARGET = "${params.Build == 'Online' ? "deploy-power-powervc" : params.DeploymentType == 'BaseUpgrade'  ? "deploy-power-powervc-base-upgrade" : params.DeploymentType == 'FixpackUpgrade' ? "deploy-power-powervc-fixpack-upgrade" : "deploy-power-powervc-offline"}"
+        TARGET = "${params.Build == 'Online' ? "deploy-power-powervc" : params.DeploymentType == 'One-Time-Upgrade'  ? "deploy-power-powervc-base-upgrade" : params.DeploymentType == 'Multi-Level-FP-Upgrade' ? "deploy-power-powervc-fixpack-upgrade" : "deploy-power-powervc-offline"}"
 
         ICP_FIXPACK = ""
         ICP_EDITION = "ee"
-        
+
         TIMEOUT = "${params.KeepFor}"
         OS_NETWORK = "${params.Network}"
         OS_PRIVATE_NETWORK = "${params.Network}"
         TERMPLATE_FILE = ".${TARGET}.tfvars.template"
         OFFLINE_IMAGE_LOCATION = "https://na.artifactory.swg-devops.com/artifactory/hyc-cloud-private-${DEPLOY_REPO}-generic-local/${BUILD_TYPE}/${ICP_VERSION}/${OFFLINE_TARBALL}".trim()
-        BASE_UPGRADE_LOCATION = "${params.DeploymentType == 'BaseUpgrade' ? "https://na.artifactory.swg-devops.com/artifactory/hyc-cloud-private-${UPGRADE_REPO}-generic-local/${UPGRADE_BUILD_TYPE}/${UPGRADE_ICP_VERSION}/${UPGRADE_OFFLINE_TARBALL}" : ""}".trim()
-        FIXPACK_DOWNLOAD_LOCATION = "${params.DeploymentType == 'FixpackUpgrade' ? "${RELEASED_FIXPACK_LOCS}, https://na.artifactory.swg-devops.com/artifactory/hyc-cloud-private-${UPGRADE_REPO}-generic-local/${UPGRADE_BUILD_TYPE}/${UPGRADE_ICP_VERSION}/${UPGRADE_OFFLINE_TARBALL}" : ""}".trim()
+        BASE_UPGRADE_LOCATION = "${params.DeploymentType == 'One-Time-Upgrade' ? "https://na.artifactory.swg-devops.com/artifactory/hyc-cloud-private-${UPGRADE_REPO}-generic-local/${UPGRADE_BUILD_TYPE}/${UPGRADE_ICP_VERSION}/${UPGRADE_OFFLINE_TARBALL}" : ""}".trim()
+        FIXPACK_DOWNLOAD_LOCATION = "${params.DeploymentType == 'Multi-Level-FP-Upgrade' ? "${RELEASED_FIXPACK_LOCS}, https://na.artifactory.swg-devops.com/artifactory/hyc-cloud-private-${UPGRADE_REPO}-generic-local/${UPGRADE_BUILD_TYPE}/${UPGRADE_ICP_VERSION}/${UPGRADE_OFFLINE_TARBALL}" : ""}".trim()
         OCP_ENV = false
         IMAGE_FILTER = "${OCP_ENV == true ? "openshift" : "cicd"}"
 	 }
@@ -904,7 +904,7 @@ pipeline {
                         env.INSTANCE_NAME = "${BUILD_USER_FIRST_NAME}"
                         env.INSTANCE_NAME = env.INSTANCE_NAME.toLowerCase()
                     }
-                    if ( DEPLOYMENT_METHOD == 'FixpackUpgrade') {
+                    if ( DEPLOYMENT_METHOD == 'Multi-Level-FP-Upgrade') {
                         LOCS = FIXPACK_DOWNLOAD_LOCATION.split(', ') as List
                         env.FIXPACK_DOWNLOAD_LOCATIONS = LOCS.collect{ '\\"' + it + '\\"'}
                         env.FIXPACK_DOWNLOAD_LOCATIONS =  env.FIXPACK_DOWNLOAD_LOCATIONS as String
@@ -930,7 +930,7 @@ pipeline {
 
                         sh(returnStdout: false, script: "cd ${WORKSPACE}/installer/ && git checkout tags/${TAG}")
                     }
-                    
+
                     exists = fileExists "${WORKSPACE}/installer/cluster/power.config.yaml"
                     if (exists) {
                         sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/power.config.yaml"
@@ -955,7 +955,7 @@ pipeline {
 
                         MEM_MASTER_GB = MEM_REQ_MASTER.toInteger()
                         MEM_REQ_MASTER_MB = MEM_MASTER_GB * 1024
-                        
+
                         if (env.DEPLOY_MASTER == "false")
                         {
                             echo "Cluster cant deploy without master"
@@ -963,7 +963,7 @@ pipeline {
 
                         }
                         if ( env.VIR_CHOSE == "KVM" )
-                        {   
+                        {
                             echo 'Setting-up terraform template file for KVM!'
                             env.AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/kvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
                             env.AVAILABILITY_ZONE=getZone(env.VIR_CHOSE, HARDWARE_CHOSE )
@@ -988,8 +988,8 @@ pipeline {
                             if ( status != 0)
                             {
                                 echo "Unable to create template ${env.WORKER_TEMPLATE}"
-                            }                        
-                        } 
+                            }
+                        }
                         else if ( env.VIR_CHOSE == "PowerVM" )
                         {
                             echo 'Setting-up terraform template file for PowerVM!'
@@ -1017,10 +1017,10 @@ pipeline {
                             if ( status != 0)
                             {
                                 echo "Unable to create template ${env.WORKER_TEMPLATE}"
-                            }    
+                            }
                         }
                     }
-                    catch (err) 
+                    catch (err)
                     {
                         echo 'Error ! Template prepration failed !'
                         getArtifactsAndClean(env.AUTH_URL)
@@ -1130,7 +1130,7 @@ pipeline {
                         if ( TIMEOUT_MIN != 0 )
                         {
                             TIMEOUT_SEC=TIMEOUT_MIN*60
-                        } 
+                        }
                         echo "HOLDING THE CLUSTER TEAR DOWN FOR ${TIMEOUT_MIN} MINUTES"
                         sleep TIMEOUT_SEC
                         }
@@ -1145,7 +1145,7 @@ pipeline {
         always {
             archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/systeminfo.txt.tar.gz', fingerprint: true, onlyIfSuccessful: false
             archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/cluster.tar.gz', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/cluster/config.yaml', fingerprint: true, onlyIfSuccessful: false           
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/cluster/config.yaml', fingerprint: true, onlyIfSuccessful: false
             archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/powervc.tfvars', fingerprint: true, onlyIfSuccessful: false
             cleanWs()
             //notifyBySlack(currentBuild.result)
