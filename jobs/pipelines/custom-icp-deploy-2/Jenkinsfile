@@ -3,76 +3,76 @@
 //Get Infra and OS from user
 properties([
     parameters([
-        [$class: 'ChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the Build from the Dropdown List', 
-            filterLength: 1, 
+        [$class: 'ChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the Build from the Dropdown List',
+            filterLength: 1,
             filterable: false,
             name: 'Build',
             randomName: 'choice-parameter-66333314439613978',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Env\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return["Online:selected","offline"]'
                 ]
             ]
-        ], 
+        ],
 
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the Repo from the Dropdown List', 
-            filterLength: 1, 
-            filterable: false, 
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the Repo from the Dropdown List',
+            filterLength: 1,
+            filterable: false,
             name: 'Repo',
             randomName: 'choice-parameter-6631314439613978',
             referencedParameters: 'Build',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Env\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return["daily","edge","stash","stable","release"]'
                 ]
             ]
-        ], 
+        ],
 
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the version from the Dropdown List', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'Version', 
-            randomName: 'choice-parameter-7931314456178619', 
-            referencedParameters: 'Repo, Build', 
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the version from the Dropdown List',
+            filterLength: 1,
+            filterable: false,
+            name: 'Version',
+            randomName: 'choice-parameter-7931314456178619',
+            referencedParameters: 'Repo, Build',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Environment from Env Param\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        ''' 
+                    classpath: [],
+                    sandbox: false,
+                    script:
+                        '''
                         import hudson.util.Secret
                         import jenkins.model.*
                         import com.cloudbees.plugins.credentials.CredentialsProvider
@@ -115,7 +115,7 @@ properties([
                                 bld = ls.split() as List
                                 return bld
                             }
-                            else 
+                            else
                             {
                                 return["latest"]
                             }
@@ -125,27 +125,27 @@ properties([
             ]
         ],
 
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the Tarball from the Dropdown List(NOTE: Ignore for Online deployment)', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'Package', 
-            randomName: 'choice-parameter-79344564456178619', 
-            referencedParameters: 'Repo, Version, Build', 
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the Tarball from the Dropdown List(NOTE: Ignore for Online deployment)',
+            filterLength: 1,
+            filterable: false,
+            name: 'Package',
+            randomName: 'choice-parameter-79344564456178619',
+            referencedParameters: 'Repo, Version, Build',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Environment from Env Param\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        ''' 
+                    classpath: [],
+                    sandbox: false,
+                    script:
+                        '''
                             import jenkins.model.*
                             if ( Build.equals("offline") )
                             {
@@ -182,7 +182,7 @@ properties([
                                 bld = ls.split() as List
                                 return bld
                             }
-                            else 
+                            else
                             {
                                     return["Ignore This for Online"]
                             }
@@ -190,49 +190,49 @@ properties([
                 ]
             ]
         ],
-        [$class: 'ChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the Operating System from the Dropdown List', 
-            filterLength: 1, 
-            filterable: false, 
+        [$class: 'ChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the Operating System from the Dropdown List',
+            filterLength: 1,
+            filterable: false,
             name: 'Virtualization',
-            randomName: 'choice-parameter-5631314439613978', 
+            randomName: 'choice-parameter-5631314439613978',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Env\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return["KVM","PowerVM:selected"]'
                 ]
             ]
-        ], 
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the Server from the Dropdown List', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'Hardware', 
-            randomName: 'choice-parameter-5631314456178619', 
-            referencedParameters: 'Virtualization', 
+        ],
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the Server from the Dropdown List',
+            filterLength: 1,
+            filterable: false,
+            name: 'Hardware',
+            randomName: 'choice-parameter-5631314456178619',
+            referencedParameters: 'Virtualization',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Environment from Env Param\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         ''' if (Virtualization.equals("KVM")){
                                 return["P9","P8:selected"]
                             }
@@ -243,62 +243,62 @@ properties([
                 ]
             ]
         ],
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the Server from the Dropdown List', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'Operatingsystem', 
-            randomName: 'choice-parameter-5631314456178610', 
-            referencedParameters: 'Hardware, Virtualization', 
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the Server from the Dropdown List',
+            filterLength: 1,
+            filterable: false,
+            name: 'Operatingsystem',
+            randomName: 'choice-parameter-5631314456178610',
+            referencedParameters: 'Hardware, Virtualization',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Environment from Env Param\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         ''' if (Hardware.equals("P8") && Virtualization.equals("KVM")){
                                 return["RHEL7.6","RHEL7.5","UBUNTU18.04","UBUNTU16.04","SLES12SP4","SLES12SP3"]
                             }
                             else if(Hardware.equals("P9") && Virtualization.equals("PowerVM")){
-                                return["RHEL7.6-ALT","RHEL7.6","RHEL7.5-ALT","RHEL7.5","SLES12SP4","SLES12SP3","UBUNTU16.04"]
+                                return["RHEL7.7","RHEL7.6-ALT","RHEL7.6","RHEL7.5-ALT","RHEL7.5","SLES12SP4","SLES12SP3","UBUNTU16.04"]
                             }
                             else if(Hardware.equals("P9") && Virtualization.equals("KVM")){
                                 return["RHEL7.6-ALT","RHEL7.6","RHEL7.5-ALT","RHEL7.5","SLES12SP4","SLES12SP3","UBUNTU18.04","UBUNTU16.04"]
                             }
                             else if(Hardware.equals("P8") && Virtualization.equals("PowerVM")){
-                                return["RHEL7.6","RHEL7.5","SLES12SP4","SLES12SP3","UBUNTU16.04"]
+                                return["RHEL7.7","RHEL7.6","RHEL7.5","SLES12SP4","SLES12SP3","UBUNTU16.04"]
                             }
                         '''
                 ]
             ]
         ],
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select the network from the Dropdown List(preferably icp_network1..(icp_network:181(VLAN=2079))icp_network1:64(VLAND:2230))', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'Network', 
-            randomName: 'choice-parameter-563131889956178610', 
-            referencedParameters: 'Virtualization', 
+        [$class: 'CascadeChoiceParameter',
+            choiceType: 'PT_SINGLE_SELECT',
+            description: 'Select the network from the Dropdown List(preferably icp_network1..(icp_network:181(VLAN=2079))icp_network1:64(VLAND:2230))',
+            filterLength: 1,
+            filterable: false,
+            name: 'Network',
+            randomName: 'choice-parameter-563131889956178610',
+            referencedParameters: 'Virtualization',
             script: [
-                $class: 'GroovyScript', 
+                $class: 'GroovyScript',
                 fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         'return[\'Could not get Environment from Env Param\']'
-                ], 
+                ],
                 script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
+                    classpath: [],
+                    sandbox: false,
+                    script:
                         ''' if (Virtualization.equals("KVM")){
                                 return["icp_network"]
                             }
@@ -398,7 +398,7 @@ pipeline {
         OS_NETWORK_API_VERSION=2.0
         OS_IMAGE_API_VERSION=2
         OS_VOLUME_API_VERSION=2
-        
+
         VIR_CHOSE = "${params.Virtualization}"
         HARDWARE_CHOSE = "${params.Hardware}"
         DISTRO_CHOSE = "${params.Operatingsystem}"
@@ -447,7 +447,7 @@ pipeline {
 
         ICP_FIXPACK = ""
         ICP_EDITION = "ee"
-        
+
         TIMEOUT = "${params.KeepFor}"
         OS_NETWORK = "${params.Network}"
         OS_PRIVATE_NETWORK = "${params.Network}"
@@ -466,7 +466,7 @@ pipeline {
         }
         stage('Prepare Config') {
             steps {
-                script { 
+                script {
                     echo "Preparing power config file"
                     if ( BUILD_TYPE == "offline")
                     {
@@ -486,7 +486,7 @@ pipeline {
 
                         sh(returnStdout: false, script: "cd ${WORKSPACE}/installer/ && git checkout tags/${TAG}")
                     }
-                    
+
                     exists = fileExists "${WORKSPACE}/installer/cluster/power.config.yaml"
                     if (exists) {
                         sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/power.config.yaml"
@@ -495,7 +495,7 @@ pipeline {
                         sh "echo '${params.ICPConfig}' >> ${WORKSPACE}/installer/cluster/config.yaml"
                         env.ICP_CONFIG_FILE = "${WORKSPACE}/installer/cluster/config.yaml"
                     }
-                    
+
                 }
             }
         }
@@ -512,7 +512,7 @@ pipeline {
 
                         MEM_MASTER_GB = MEM_REQ_MASTER.toInteger()
                         MEM_REQ_MASTER_MB = MEM_MASTER_GB * 1024
-                        
+
                         if (env.DEPLOY_MASTER == "false")
                         {
                             echo "Cluster cant deploy without master"
@@ -520,7 +520,7 @@ pipeline {
 
                         }
                         if ( env.VIR_CHOSE == "KVM" )
-                        {   
+                        {
                             echo 'Setting-up terraform template file for KVM!'
                             env.AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/kvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
                             env.AVAILABILITY_ZONE=getZone(env.VIR_CHOSE, HARDWARE_CHOSE )
@@ -545,8 +545,8 @@ pipeline {
                             if ( status != 0)
                             {
                                 echo "Unable to create template ${env.WORKER_TEMPLATE}"
-                            }                        
-                        } 
+                            }
+                        }
                         else if ( env.VIR_CHOSE == "PowerVM" )
                         {
                             echo 'Setting-up terraform template file for PowerVM!'
@@ -574,10 +574,10 @@ pipeline {
                             if ( status != 0)
                             {
                                 echo "Unable to create template ${env.WORKER_TEMPLATE}"
-                            }    
+                            }
                         }
                     }
-                    catch (err) 
+                    catch (err)
                     {
                         echo 'Error ! Template prepration failed !'
                         getArtifactsAndClean(env.AUTH_URL)
@@ -687,7 +687,7 @@ pipeline {
                         if ( TIMEOUT_MIN != 0 )
                         {
                             TIMEOUT_SEC=TIMEOUT_MIN*60
-                        } 
+                        }
                         echo "HOLDING THE CLUSTER TEAR DOWN FOR ${TIMEOUT_MIN} MINUTES"
                         sleep TIMEOUT_SEC
                         }
@@ -702,7 +702,7 @@ pipeline {
         always {
             archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/systeminfo.txt.tar.gz', fingerprint: true, onlyIfSuccessful: false
             archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/cluster.tar.gz', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/cluster/config.yaml', fingerprint: true, onlyIfSuccessful: false           
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/cluster/config.yaml', fingerprint: true, onlyIfSuccessful: false
             archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/powervc.tfvars', fingerprint: true, onlyIfSuccessful: false
             cleanWs()
             //notifyBySlack(currentBuild.result)
