@@ -5,7 +5,7 @@ properties([
     parameters([
         [$class: 'ChoiceParameter',
             choiceType: 'PT_SINGLE_SELECT',
-            description: 'Select the Deploymnet Type.[ On-Time-Upgrade : Base version + upgrade to base/FP version, Multi-Level-FP-Upgrade : Base version + upgrade to GA'd FP version + upgrade to FP version.]',
+            description: 'Select the Deploymnet Type.[ On-Time-Upgrade : Base version + upgrade to base/FP version, Multi-Level-FP-Upgrade : Base version + upgrade to GA ed FP version + upgrade to FP version.]',
             filterLength: 1,
             filterable: false,
             name: 'DeploymentType',
