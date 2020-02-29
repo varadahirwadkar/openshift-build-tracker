@@ -14,7 +14,7 @@
         if [ $? -eq 0 ] ; then
             rm -rf ~/.kube
             mkdir ~/.kube
-            scp -i id_rsa -o StrictHostKeyChecking=no  root@${MASTER_NODE}:/root/openstack-upi/auth/kubeconfig ~/.kube/config
+            scp -i id_rsa -o StrictHostKeyChecking=no  root@${BASTION_IP}:/root/openstack-upi/auth/kubeconfig ~/.kube/config
             make terraform:output TERRAFORM_DIR=.${TARGET} TERRAFORM_OUTPUT_VAR=etc_hosts_entries >> /etc/hosts
         else
             echo 'Unable to access the cluster. You may delete the VMs manually'
