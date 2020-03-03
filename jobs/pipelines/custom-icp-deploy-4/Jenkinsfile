@@ -505,6 +505,12 @@ pipeline {
                     ansiColor('xterm') {
                         echo ""
                     }
+                    wrap([$class: 'BuildUser']) 
+                    {
+                        env.INSTANCE_NAME = "${BUILD_USER_FIRST_NAME}"
+                        env.INSTANCE_NAME = env.INSTANCE_NAME.toLowerCase()
+                    }
+    
                     try
                     {
                         MEM_WORKER_GB = MEM_REQ_WORKER.toInteger()

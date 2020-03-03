@@ -19,6 +19,8 @@ availability_zone = "__AVAILABILITY_ZONE__"
 #ftp3_password  = ""
 os_image_name = "__OS_IMAGE__"
 image_distro = "__IMAGE_DISTRO__"
+instance_name = "__INSTANCE_NAME__"
+
 
 master = { nodes = "__NUM_OF_MASTERS__", size = "__MASTER_TEMPLATE__"}
 manager = { nodes = "__NUM_OF_MANAGERS__", size = "__MANAGER_TEMPLATE__"}
