@@ -221,7 +221,7 @@ deploy-power-nutanix\:clean:
 ## Create power build on PowerVC environment
 deploy-power-powervc: %deploy-power-powervc:
 	@$(shell sed -e "s|__AUTH_URL__|$(AUTH_URL)|g" -e "s|__OS_TENANT_NAME__|$(OS_TENANT_NAME)|g" \
-        -e "s|__AVAILABILITY_ZONE__|$(AVAILABILITY_ZONE)|g" -e "s|__OS_IMAGE__|$(OS_IMAGE)|g" -e "s|__INSTANCE_NAME__|$(INSTANCE_NAME)|g" \      
+        -e "s|__AVAILABILITY_ZONE__|$(AVAILABILITY_ZONE)|g" -e "s|__OS_IMAGE__|$(OS_IMAGE)|g" -e "s|__INSTANCE_NAME__|$(INSTANCE_NAME)|g" \
         -e "s|__IMAGE_DISTRO__|$(IMAGE_DISTRO)|g" -e "s|__CREATE_STORAGE__|$(CREATE_STORAGE)|g" -e "s|__SYSTEM_TUNING__|$(SYSTEM_TUNING)|g" \
 		-e "s|__SYSTEM_TUNING__|$(SYSTEM_TUNING)|g" -e "s|__NUM_OF_MASTERS__|$(NUM_OF_MASTERS)|g" \
         -e "s|__NUM_OF_MANAGERS__|$(NUM_OF_MANAGERS)|g" -e "s|__NUM_OF_WORKERS__|$(NUM_OF_WORKERS)|g" \
