@@ -466,7 +466,7 @@ deploy-openshift4-powervc: %deploy-openshift4-powervc:
 		-e "s|__NUM_OF_WORKERS__|$(NUM_OF_WORKERS)|g" -e "s|__WORKER_TEMPLATE__|$(WORKER_TEMPLATE)|g"  \
 		-e "s|__NUM_OF_MASTERS__|$(NUM_OF_MASTERS)|g" -e "s|__MASTER_TEMPLATE__|$(MASTER_TEMPLATE)|g" \
 		-e "s|__BOOTSTRAP_TEMPLATE__|$(BOOTSTRAP_TEMPLATE)|g" -e "s|__BASTION_TEMPLATE__|$(BASTION_TEMPLATE)|g" \
-		-e "s|__REDHAT_RELEASE__|$(REDHAT_RELEASE)|g" \
+		-e "s|__REDHAT_RELEASE__|$(REDHAT_RELEASE)|g" -e "s|__ENABLE_E2E_TEST__|$(ENABLE_E2E_TEST)|g" \
         -e "s|__REDHAT_USERNAME__|$(REDHAT_USERNAME)|g" -e "s|__REDHAT_PASSWORD__|$(REDHAT_PASSWORD)|g"  \
         -e "s|__OS_USERNAME__|$(OS_USERNAME)|g" -e "s|__OS_PASSWORD__|$(OS_PASSWORD)|g"  \
         -e "s|__ARTIFACTORY_USER__|$(ARTIFACTORY_USER)|g" -e "s|__ARTIFACTORY_TOKEN__|$(ARTIFACTORY_TOKEN)|g" \
