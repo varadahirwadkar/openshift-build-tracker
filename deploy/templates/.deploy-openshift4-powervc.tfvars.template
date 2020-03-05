@@ -16,8 +16,8 @@ private_key = ""
 public_key  = ""
 
 bastion = { instance_type  = "__BASTION_TEMPLATE__", image_id = "__BASTION_IMAGE_ID__" }
-bootstrap = { instance_type  = "__BOOTSTRAP_TEMPLATE__", image_id = "__RHCOS_IMAGE_ID__" }
-master = { instance_type  = "__MASTER_TEMPLATE__", image_id = "__RHCOS_IMAGE_ID__",  "count"   = "__NUM_OF_MASTERS__", }
+bootstrap = { instance_type  = "__BOOTSTRAP_TEMPLATE__", image_id = "__RHCOS_IMAGE_ID__",  "count"   = 1 }
+master = { instance_type  = "__MASTER_TEMPLATE__", image_id = "__RHCOS_IMAGE_ID__",  "count"   = "__NUM_OF_MASTERS__" }
 worker = { instance_type  = "__WORKER_TEMPLATE__", image_id = "__RHCOS_IMAGE_ID__",  "count"   = "__NUM_OF_WORKERS__" }
 
 ## RedHat Subscription credentials
@@ -31,4 +31,8 @@ release_image_override = "__OPENSHIFT_IMAGE__"
 pull_secret_file = "__PULL_SECRET_FILE__"
 cluster_domain = "__CLUSTER_DOMAIN__"
 cluster_id_prefix = "__INSTANCE_NAME__"
+dns_enabled     = "true"
+
+storage_type    = "nfs"
+nfs_volume_size = "300"
 
