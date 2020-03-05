@@ -98,6 +98,7 @@ pipeline {
         PULL_SECRET_FILE = "data/pull-secret.txt"
         CLUSTER_DOMAIN = "redhat.com"
         INSTANCE_NAME = "ltccci"
+        ENABLE_E2E_TEST = "true"
 
         OCP4_ENV = true
         //IMAGE_FILTER = "${OCP_ENV == true ? "openshift" : "cicd"}"

@@ -36,3 +36,4 @@ dns_enabled     = "true"
 storage_type    = "nfs"
 nfs_volume_size = "300"
 
+e2e_tests_enabled = "__ENABLE_E2E_TEST__"
