@@ -128,7 +128,7 @@ pipeline {
         REDHAT_RELEASE = "7.6"
 
         //To pick build-harness . Remove once the Makefile.openshift_pvc upstreamed
-        BUILD_HARNESS_ORG="sudeeshjohn"
+        //BUILD_HARNESS_ORG="sudeeshjohn"
 	}
     stages {
         stage('Prepare Teraform Template') 
