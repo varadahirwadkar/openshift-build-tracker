@@ -3,6 +3,7 @@
 env.DISTRO = ""
 def TIMEOUT_SEC
 def TIMEOUT_MIN
+def E2E_SUMMARY
 
 pipeline {
     agent {
@@ -191,7 +192,7 @@ pipeline {
                     catch (err)
                     {
                         echo 'Error ! Template prepration failed !'
-                        getArtifactsAndClean_ocp4(env.AUTH_URL)
+                        getArtifactsAndCleanOcp4(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -215,7 +216,7 @@ pipeline {
                         }
                     catch (err) {
                         echo 'Error ! ENV setup failed!'
-                        getArtifactsAndClean_ocp4(env.AUTH_URL)
+                        getArtifactsAndCleanOcp4(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -238,7 +239,7 @@ pipeline {
                         }
                     catch (err) {
                         echo 'Error ! Tearing off the cluster !'
-                        getArtifactsAndClean_ocp4(env.AUTH_URL)
+                        getArtifactsAndCleanOcp4(env.AUTH_URL)
                         throw err
                     }
                 }
@@ -261,7 +262,7 @@ pipeline {
                         sleep TIMEOUT_SEC
                         }
                     finally {
-                        getArtifactsAndClean_ocp4(env.AUTH_URL)
+                        getArtifactsAndCleanOcp4(env.AUTH_URL)
                     }
                 }
             }
@@ -269,12 +270,15 @@ pipeline {
     }
     post {
         always {
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/systeminfo.txt.tar.gz', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/cluster.tar.gz', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/cluster/config.yaml', fingerprint: true, onlyIfSuccessful: false    
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/conformance-parallel-out.txt.tar.gz', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/summary.txt', fingerprint: true, onlyIfSuccessful: false   
             archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/powervc.tfvars', fingerprint: true, onlyIfSuccessful: false
+            script {
+                E2E_SUMMARY = readFile 'deploy/summary.txt'
+                E2E_SUMMARY = E2E_SUMMARY.trim()
+            }
             cleanWs()
-            notifyBySlack_ocp4(currentBuild.result, env.OPENSHIFT_INSTALL_TARBALL)
+            notifyBySlackOcp4(currentBuild.result, env.OPENSHIFT_INSTALL_TARBALL, E2E_SUMMARY)
         }
     }
 }

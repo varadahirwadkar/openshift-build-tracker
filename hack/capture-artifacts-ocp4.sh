@@ -20,3 +20,19 @@
         sed -i "s|rhel_subscription_password.*=.*$|rhel_subscription_password = ************|g" ${TARGET}.tfvars
         cp ${TARGET}.tfvars powervc.tfvars
     fi
+    pwd
+    BASTION_IP=$(make terraform:output TERRAFORM_DIR=.${TARGET} TERRAFORM_OUTPUT_VAR=bastion_ip || true)
+    [ $? -ne 0 ] && exit 1;
+    if [ ! -z "${BASTION_IP}" ]; then
+        ssh -q -i id_rsa -o StrictHostKeyChecking=no root@${BASTION_IP} exit
+        rc=$?
+        if [ $? -eq 0 ] ; then
+            ssh -i id_rsa -o StrictHostKeyChecking=no root@${BASTION_IP} tar -czvf ~/e2e_tests_results/conformance-parallel-out.txt.tar.gz ~/e2e_tests_results/conformance-parallel-out.txt
+            scp -i id_rsa -o StrictHostKeyChecking=no root@${BASTION_IP}:~/e2e_tests_results/conformance-parallel-out.txt.tar.gz .
+            scp -i id_rsa -o StrictHostKeyChecking=no root@${BASTION_IP}:~/e2e_tests_results/summary.txt .
+        else
+            echo 'Unable to access Bastion. You may delete the VMs manually'
+        fi
+    else
+        echo 'Unable to access Bastion. You may delete the VMs manually'
+    fi

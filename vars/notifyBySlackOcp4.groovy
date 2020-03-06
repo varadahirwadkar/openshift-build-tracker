@@ -1,4 +1,4 @@
-def call(String buildStatus = 'STARTED', String buildurl) {
+def call(String buildStatus = 'STARTED', String buildurl, String e2esummary) {
   // Build status of null means successful.
     buildStatus = buildStatus ?: 'SUCCESS'
     // Replace encoded slashes.
@@ -16,7 +16,9 @@ def call(String buildStatus = 'STARTED', String buildurl) {
         colorSlack = '#FF9FA1'
     }
 
-    def msgSlack = "${buildStatus}: `${decodedJobName}` #${env.BUILD_NUMBER}: (<${env.BUILD_URL}|Open>) OCP BUILD: ${buildurl}"
+    def msgSlack = """${buildStatus}: `${decodedJobName}`
+    Test Summary: `${e2esummary}` #${env.BUILD_NUMBER}: (<${env.BUILD_URL}|Open>)
+    OCP4 BUILD: ${buildurl}"""
 
     slackSend(color: colorSlack, message: msgSlack)
 }
