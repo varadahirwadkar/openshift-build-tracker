@@ -239,6 +239,7 @@ properties([
 env.DISTRO = ""
 def TIMEOUT_SEC
 def TIMEOUT_MIN
+def E2E_SUMMARY
 
 pipeline {
     agent {
@@ -520,10 +521,13 @@ pipeline {
     }
     post {
         always {
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/systeminfo.txt.tar.gz', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/cluster.tar.gz', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/cluster/config.yaml', fingerprint: true, onlyIfSuccessful: false     
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/conformance-parallel-out.txt.tar.gz', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/summary.txt', fingerprint: true, onlyIfSuccessful: false   
             archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/powervc.tfvars', fingerprint: true, onlyIfSuccessful: false
+            script {
+                E2E_SUMMARY = readFile 'deploy/summary.txt'
+                E2E_SUMMARY = E2E_SUMMARY.trim()
+            }
             cleanWs()
             //notifyBySlack(currentBuild.result, '#cloud-ci', 'cloud-ci')
         }
