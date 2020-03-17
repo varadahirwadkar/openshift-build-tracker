@@ -17,6 +17,9 @@ pipeline {
     triggers {
         cron('H H * * *')
     }
+    parameters {
+        string(defaultValue: "", description: 'Openshift Image repo', name: 'openshiftimage')
+    }
     environment {
         //users and credentials. All must be defined in Jenkins Credentials
         GITHUB_USER = credentials('GITHUB_USER')
@@ -58,7 +61,6 @@ pipeline {
         VCPUS_REQ_WORKER = "1"
         MEM_REQ_WORKER = "16"
         PRO_UNIT_REQ_WORKER = ".1"
-        OPENSHIFT_IMAGE = ""
 
 
         VCPUS_REQ_BASTION = "1"
@@ -100,6 +102,7 @@ pipeline {
         CLUSTER_DOMAIN = "redhat.com"
         INSTANCE_NAME = "ltccci"
         ENABLE_E2E_TEST = "true"
+        OPENSHIFT_IMAGE = "${params.openshiftimage}"
 
         OCP4_ENV = true
         //IMAGE_FILTER = "${OCP_ENV == true ? "openshift" : "cicd"}"
@@ -271,11 +274,16 @@ pipeline {
     post {
         always {
             archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/conformance-parallel-out.txt.tar.gz', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/summary.txt', fingerprint: true, onlyIfSuccessful: false   
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/summary.txt', fingerprint: true, onlyIfSuccessful: false
             archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/powervc.tfvars', fingerprint: true, onlyIfSuccessful: false
             script {
-                E2E_SUMMARY = readFile 'deploy/summary.txt'
-                E2E_SUMMARY = E2E_SUMMARY.trim()
+                if (fileExists('deploy/summary.txt')) {
+                    E2E_SUMMARY = readFile 'deploy/summary.txt'
+                    E2E_SUMMARY = E2E_SUMMARY.trim()
+                }
+                if (OPENSHIFT_IMAGE != null) {
+                env.OPENSHIFT_INSTALL_TARBALL = OPENSHIFT_IMAGE 
+                }
             }
             cleanWs()
             notifyBySlackOcp4(currentBuild.result, env.OPENSHIFT_INSTALL_TARBALL, E2E_SUMMARY)
