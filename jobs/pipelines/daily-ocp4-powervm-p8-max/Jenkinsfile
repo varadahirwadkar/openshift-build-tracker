@@ -18,7 +18,7 @@ pipeline {
         cron('H H * * *')
     }
     parameters {
-        string(defaultValue: "", description: 'Openshift Image repo', name: 'openshiftimage')
+        string(defaultValue: null, description: 'Openshift Image repo', name: 'openshiftimage')
     }
     environment {
         //users and credentials. All must be defined in Jenkins Credentials
@@ -62,7 +62,6 @@ pipeline {
         MEM_REQ_WORKER = "32"
         PRO_UNIT_REQ_WORKER = ".8"
         OPENSHIFT_IMAGE = "${params.openshiftimage}"
-
 
         VCPUS_REQ_BASTION = "2"
         MEM_REQ_BASTION = "8"
@@ -281,7 +280,8 @@ pipeline {
                     E2E_SUMMARY = readFile 'deploy/summary.txt'
                     E2E_SUMMARY = E2E_SUMMARY.trim()
                 }
-                if (OPENSHIFT_IMAGE != null) {
+                envVars = env.getEnvironment()
+                if (envVars.containsKey("OPENSHIFT_IMAGE")) {
                 env.OPENSHIFT_INSTALL_TARBALL = OPENSHIFT_IMAGE
                 }
             }

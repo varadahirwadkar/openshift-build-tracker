@@ -18,7 +18,7 @@ pipeline {
         cron('H H * * *')
     }
     parameters {
-        string(defaultValue: "", description: 'Openshift Image repo', name: 'openshiftimage')
+        string(defaultValue: null, description: 'Openshift Image repo', name: 'openshiftimage')
     }
     environment {
         //users and credentials. All must be defined in Jenkins Credentials
@@ -281,8 +281,9 @@ pipeline {
                     E2E_SUMMARY = readFile 'deploy/summary.txt'
                     E2E_SUMMARY = E2E_SUMMARY.trim()
                 }
-                if (OPENSHIFT_IMAGE != null) {
-                env.OPENSHIFT_INSTALL_TARBALL = OPENSHIFT_IMAGE 
+                envVars = env.getEnvironment()
+                if (envVars.containsKey("OPENSHIFT_IMAGE")) {
+                env.OPENSHIFT_INSTALL_TARBALL = OPENSHIFT_IMAGE
                 }
             }
             cleanWs()
