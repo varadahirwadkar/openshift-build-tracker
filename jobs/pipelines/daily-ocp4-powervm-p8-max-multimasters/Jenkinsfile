@@ -61,7 +61,7 @@ pipeline {
         VCPUS_REQ_WORKER = "8"
         MEM_REQ_WORKER = "32"
         PRO_UNIT_REQ_WORKER = ".8"
-        OPENSHIFT_IMAGE = "${params.openshiftimage}"
+        //OPENSHIFT_IMAGE = "${params.openshiftimage}"
 
 
         VCPUS_REQ_BASTION = "2"
@@ -132,6 +132,8 @@ pipeline {
 
                         MEM_BOOTSTRAP_GB = MEM_REQ_BOOTSTRAP.toInteger()
                         MEM_REQ_BOOTSTRAP_MB = MEM_BOOTSTRAP_GB * 1024
+                        env.OPENSHIFT_IMAGE = ""
+                        env.OPENSHIFT_IMAGE = "${params.openshiftimage}"
 
                         if (env.DEPLOY_MASTER == "false")
                         {
@@ -281,9 +283,8 @@ pipeline {
                     E2E_SUMMARY = readFile 'deploy/summary.txt'
                     E2E_SUMMARY = E2E_SUMMARY.trim()
                 }
-                envVars = env.getEnvironment()
-                if (envVars.containsKey("OPENSHIFT_IMAGE")) {
-                env.OPENSHIFT_INSTALL_TARBALL = OPENSHIFT_IMAGE
+                if ( env.OPENSHIFT_IMAGE != ""  ) {
+                    env.OPENSHIFT_INSTALL_TARBALL = env.OPENSHIFT_IMAGE
                 }
             }
             cleanWs()
