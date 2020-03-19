@@ -18,7 +18,7 @@ pipeline {
         cron('H H * * *')
     }
     parameters {
-        string(defaultValue: null, description: 'Openshift Image repo', name: 'openshiftimage')
+        string(defaultValue: "", description: 'Openshift Image repo', name: 'openshiftimage')
     }
     environment {
         //users and credentials. All must be defined in Jenkins Credentials
