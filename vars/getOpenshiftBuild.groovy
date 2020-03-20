@@ -8,15 +8,17 @@ def call(release){
     def ls =''
     build.eachLine{
         if (it =~ /^<tr/) {
-                String lst = it.findAll(/<a href=".*/)
-                    if (lst.contains("install")) {
-                    if (lst.contains("linux")) {
+            String lst = it.findAll(/<a href=".*/)
+            if (lst.contains("install")) {
+                if (lst.contains("linux")) {
+                    if (lst.contains("ppc64le")) {
                         ls = ls + " " + (lst - min1)
-                            ls = ls - min3
-                            ls = ls - min4
-            }
+                        ls = ls - min3
+                        ls = ls - min4
                     }
+                }
             }
+        }
     }
     //bld = ls.split() as List
     def lsnew = ls.trim()
