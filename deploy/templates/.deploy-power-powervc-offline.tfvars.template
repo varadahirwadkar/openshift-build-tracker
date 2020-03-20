@@ -42,6 +42,8 @@ os_network = "__OS_NETWORK__"
 insecure = "true"
 #verbose = "-v"
 
+high_availability =  "__HIGH_AVAILABILITY__"
+
 offline_image_location = "__OFFLINE_IMAGE_LOCATION__"
 offline_remote_password = "__ARTIFACTORY_API_KEY__"
 icp_version = ""
