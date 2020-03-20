@@ -235,7 +235,7 @@ deploy-power-powervc: %deploy-power-powervc:
         -e "s|__ARTIFACTORY_USER__|$(ARTIFACTORY_USER)|g" -e "s|__ARTIFACTORY_API_KEY__|$(ARTIFACTORY_TOKEN)|g" \
 		-e "s|__MASTER_TEMPLATE__|$(MASTER_TEMPLATE)|g" -e "s|__MANAGER_TEMPLATE__|$(MANAGER_TEMPLATE)|g" \
         -e "s|__WORKER_TEMPLATE__|$(WORKER_TEMPLATE)|g" -e "s|__VA_TEMPLATE__|$(VA_TEMPLATE)|g" \
-        -e "s|__PROXY_TEMPLATE__|$(PROXY_TEMPLATE)|g" -e "s|__GLUSTER_TEMPLATE__|$(GLUSTER_TEMPLATE)|g" templates/$(TERRAFORM_VARS_FILE).template > $(TERRAFORM_VARS_FILE))
+        -e "s|__PROXY_TEMPLATE__|$(PROXY_TEMPLATE)|g" -e "s|__GLUSTER_TEMPLATE__|$(GLUSTER_TEMPLATE)|g" -e "s|__HIGH_AVAILABILITY__|$(HIGH_AVAILABILITY)|g" templates/$(TERRAFORM_VARS_FILE).template > $(TERRAFORM_VARS_FILE))
 	@echo -e        "\nAUTH_URL" = $(AUTH_URL)\
         "\nOS_TENANT_NAME" = $(OS_TENANT_NAME)\
         "\nAVAILABILITY_ZONE" = $(AVAILABILITY_ZONE)\
@@ -265,7 +265,8 @@ deploy-power-powervc: %deploy-power-powervc:
         "\nWORKER_TEMPLATE" = $(WORKER_TEMPLATE)\
         "\nVA_TEMPLATE" = $(VA_TEMPLATE)\
         "\nPROXY_TEMPLATE" = $(PROXY_TEMPLATE)\
-        "\nGLUSTER_TEMPLATE" = $(GLUSTER_TEMPLATE)
+        "\nGLUSTER_TEMPLATE" = $(GLUSTER_TEMPLATE)\
+        "\nHIGH_AVAILABILITY" = $(HIGH_AVAILABILITY)
 	@$(SELF) -s deploy:powervc POWERVC_DEPLOY_DIR=$(TERRAFORM_DIR) POWERVC_TERRAFORM_VARS_FILE=$(TERRAFORM_VARS_FILE)
 
 .PHONY: deploy-power-powervc\:config
@@ -912,7 +913,7 @@ deploy-power-powervc-offline: %deploy-power-powervc-offline:
         -e "s|__OFFLINE_IMAGE__|$(DEPLOY_REPO)|g" -e "s|__ARTIFACTORY_USER__|$(ARTIFACTORY_USER)|g" \
         -e "s|__ARTIFACTORY_API_KEY__|$(ARTIFACTORY_TOKEN)|g" -e "s|__MASTER_TEMPLATE__|$(MASTER_TEMPLATE)|g" \
         -e "s|__MANAGER_TEMPLATE__|$(MANAGER_TEMPLATE)|g" -e "s|__WORKER_TEMPLATE__|$(WORKER_TEMPLATE)|g" -e "s|__VA_TEMPLATE__|$(VA_TEMPLATE)|g" \
-        -e "s|__PROXY_TEMPLATE__|$(PROXY_TEMPLATE)|g" -e "s|__GLUSTER_TEMPLATE__|$(GLUSTER_TEMPLATE)|g" templates/$(TERRAFORM_VARS_FILE).template > $(TERRAFORM_VARS_FILE))
+        -e "s|__PROXY_TEMPLATE__|$(PROXY_TEMPLATE)|g" -e "s|__GLUSTER_TEMPLATE__|$(GLUSTER_TEMPLATE)|g" -e "s|__HIGH_AVAILABILITY__|$(HIGH_AVAILABILITY)|g" templates/$(TERRAFORM_VARS_FILE).template > $(TERRAFORM_VARS_FILE))
 	@echo -e        "\nAUTH_URL" = $(AUTH_URL)\
         "\nOS_TENANT_NAME" = $(OS_TENANT_NAME)\
         "\nAVAILABILITY_ZONE" = $(AVAILABILITY_ZONE)\
@@ -942,7 +943,8 @@ deploy-power-powervc-offline: %deploy-power-powervc-offline:
         "\nWORKER_TEMPLATE" = $(WORKER_TEMPLATE)\
         "\nVA_TEMPLATE" = $(VA_TEMPLATE)\
         "\nPROXY_TEMPLATE" = $(PROXY_TEMPLATE)\
-        "\nGLUSTER_TEMPLATE" = $(GLUSTER_TEMPLATE)
+        "\nGLUSTER_TEMPLATE" = $(GLUSTER_TEMPLATE)\
+        "\nHIGH_AVAILABILITY" = $(HIGH_AVAILABILITY) 
 
 	@$(SELF) -s deploy:powervc POWERVC_DEPLOY_DIR=$(TERRAFORM_DIR) POWERVC_TERRAFORM_VARS_FILE=$(TERRAFORM_VARS_FILE)
 

@@ -43,6 +43,8 @@ insecure = "true"
 
 #verbose = "-v"
 
+high_availability =  "__HIGH_AVAILABILITY__"
+
 icp_version = "__ARTIFACTORY_USER__:__ARTIFACTORY_API_KEY__@hyc-cloud-private-__REPO__-docker-local.artifactory.swg-devops.com/ibmcom-ppc64le/icp-inception:__VERSION____FIXPACK__-__EDITION__"
 
 icp_configuration = {
