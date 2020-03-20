@@ -425,7 +425,7 @@ pipeline {
         GLUSTER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "worker"
 
         VA = "${params.DeployVA == true ? "enabled"  : "disabled"}"
-        HIGH_AVAILABILITY = "${params.high_availability == true ? "true"  : "false"}"
+        HIGH_AVAILABILITY = "${params.EnableHA == true ? "true"  : "false"}"
         ISTIO = "${params.EnableIstio == true ? "enabled"  : "disabled"}"
         MCM = "${params.EnableMCM == true ? "enabled"  : "disabled"}"
         NPDD = "${params.EnableNodeProblemDetector == true ? "enabled"  : "disabled"}"
