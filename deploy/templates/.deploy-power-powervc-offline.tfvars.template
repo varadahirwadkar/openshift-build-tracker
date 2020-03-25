@@ -40,13 +40,19 @@ os_private_network = "__OS_PRIVATE_NETWORK__"
 os_network = "__OS_NETWORK__"
 
 insecure = "true"
+
 #verbose = "-v"
 
 high_availability =  "__HIGH_AVAILABILITY__"
 
+glusterfs_enabled =  "__GLUSTER_FS__"
+
 offline_image_location = "__OFFLINE_IMAGE_LOCATION__"
+
 offline_remote_password = "__ARTIFACTORY_API_KEY__"
+
 icp_version = ""
+
 icp_configuration = {
 
   management_services = {
