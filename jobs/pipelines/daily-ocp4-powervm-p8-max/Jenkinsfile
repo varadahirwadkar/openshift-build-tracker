@@ -17,9 +17,6 @@ pipeline {
     triggers {
         cron('H H * * *')
     }
-    parameters {
-        string(defaultValue: "", description: 'Openshift Image repo', name: 'openshiftimage')
-    }
     environment {
         //users and credentials. All must be defined in Jenkins Credentials
         GITHUB_USER = credentials('GITHUB_USER')
@@ -61,7 +58,6 @@ pipeline {
         VCPUS_REQ_WORKER = "8"
         MEM_REQ_WORKER = "32"
         PRO_UNIT_REQ_WORKER = ".8"
-        //OPENSHIFT_IMAGE = "${params.openshiftimage}"
 
         VCPUS_REQ_BASTION = "2"
         MEM_REQ_BASTION = "8"
@@ -111,6 +107,19 @@ pipeline {
 	 }
 
     stages {
+        stage('pull artifact') {
+            steps {
+                script {
+                    step([  $class: 'CopyArtifact',
+                    filter: 'latest-4.3-build.txt',
+                    fingerprintArtifacts: true,
+                    projectName: 'poll-artifactory',
+                    target: 'artifactory',
+                    selector: lastSuccessful()
+                    ])
+                }
+            }
+        }
         //Checkout the installer git repo
         stage('Prepare Teraform Template') {
             steps {
@@ -132,7 +141,10 @@ pipeline {
                         MEM_BOOTSTRAP_GB = MEM_REQ_BOOTSTRAP.toInteger()
                         MEM_REQ_BOOTSTRAP_MB = MEM_BOOTSTRAP_GB * 1024
                         env.OPENSHIFT_IMAGE = ""
-                        env.OPENSHIFT_IMAGE = "${params.openshiftimage}"
+                        if (fileExists('artifactory/latest-4.3-build.txt')) {
+                            env.OPENSHIFT_IMAGE = readFile 'artifactory/latest-4.3-build.txt'
+                            env.OPENSHIFT_IMAGE = env.OPENSHIFT_IMAGE.trim()
+                        }
 
                         if (env.DEPLOY_MASTER == "false")
                         {
