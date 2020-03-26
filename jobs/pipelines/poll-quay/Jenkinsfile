@@ -51,6 +51,8 @@ pipeline {
                     python3 quay_ws/ocp-build-of-the-day.py | sed -n -e '/Summary/,/----/ p' > all-builds.txt
                     python3 quay_ws/ocp-build-of-the-day.py -v 4.3.0 | sed -n -e '/Summary/,/----/ p' > all-4.3-builds.txt
                     python3 quay_ws/ocp-build-of-the-day.py -v 4.3.0 | sed -n -e '/Summary/,/----/ p' | grep -v 'Summary\\|---*' | tail -n 1 > latest-4.3-build.txt
+                    python3 quay_ws/ocp-build-of-the-day.py -v 4.4.0 | sed -n -e '/Summary/,/----/ p' | grep -v 'Summary\\|---*' | tail -n 1 > latest-4.4-build.txt
+                    python3 quay_ws/ocp-build-of-the-day.py -v 4.5.0 | sed -n -e '/Summary/,/----/ p' | grep -v 'Summary\\|---*' | tail -n 1 > latest-4.5-build.txt
                     if [ `diff -q latest-4.3-build.txt old/latest-4.3-build.txt | wc -l`  -eq 1 ]; then
                         echo "yes" > trigger.txt
                     else
@@ -62,23 +64,6 @@ pipeline {
                     {
                         echo 'Error ! Template prepration failed !'
                         throw err
-                    }
-                }
-            }
-        }
-        stage ('Starting deployment jobs') {
-            steps {
-                script {
-                    BUILD = readFile "${WORKSPACE}/latest-4.3-build.txt"
-                    BUILD = BUILD.trim()
-                    TRIGGER = readFile "${WORKSPACE}/trigger.txt"
-                    TRIGGER = TRIGGER.trim()
-                    if ( TRIGGER == 'yes')
-                    {
-                        env.OPENSHIFT_INSTALL_TARBALL = BUILD
-                        E2E_SUMMARY = "No Test run"
-                        echo "Startig the daily-ocp4-powervm-p8-min project with ${BUILD}"
-                        build job: 'daily-ocp4-powervm-p8-min', wait: false, parameters: [[$class: 'StringParameterValue', name: 'openshiftimage', value: "${BUILD}"]]
                     }
                 }
             }
