@@ -11,7 +11,7 @@ RUN apt-get update && apt install --yes nodejs imagemagick gifsicle \
         libtest-www-selenium-perl \
         firefoxdriver \
         ruby-childprocess \
-        python-pip \
+        python3-pip \
         make \
         unzip \
         jq \
@@ -23,6 +23,6 @@ RUN apt-get update && apt install --yes nodejs imagemagick gifsicle \
         python-selenium \
 	    sudo \
     && rm -rf /var/lib/apt/lists/*
-RUN pip install python-openstackclient
+RUN pip3 install python-openstackclient
 RUN ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
 
