@@ -98,6 +98,9 @@ pipeline {
         CLUSTER_DOMAIN = "redhat.com"
         INSTANCE_NAME = "ltccci"
         ENABLE_E2E_TEST = "true"
+        E2E_GIT = "https://github.com/openshift/origin"
+        E2E_BRANCH = "release-4.3"
+        E2E_EXCLUDE_LIST = "https://gist.githubusercontent.com/mkumatag/ee4fdfa468f43f3cabffac945ccb843c/raw/a1ab152762f84ffbfd2d43e1f0aac58d002a45f3/ocp43_power_blacklist.txt"
 
         OCP4_ENV = true
         //IMAGE_FILTER = "${OCP_ENV == true ? "openshift" : "cicd"}"
