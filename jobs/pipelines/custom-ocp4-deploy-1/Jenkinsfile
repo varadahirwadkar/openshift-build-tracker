@@ -265,6 +265,7 @@ pipeline {
 
         string(defaultValue: '0', description: 'Enter time(in Minutes) to retain the cluster', name: 'KeepFor')
         string(defaultValue: '', description: 'Enter Registry link for the OCP Build. This will override the Tarball', name: 'Ocpimage')
+        booleanParam(defaultValue: false, name: 'Rune2e', description: 'Select if you want to run e2e')
 
 
     }
@@ -310,6 +311,7 @@ pipeline {
         MEM_REQ_WORKER = "${params.MemWorker}"
         PRO_UNIT_REQ_WORKER = "${params.ProUnitWorker}"
         OPENSHIFT_IMAGE = "${params.Ocpimage}"
+        ENABLE_E2E_TEST = "${params.Rune2e}"
 
 
         VCPUS_REQ_BASTION = "2"
