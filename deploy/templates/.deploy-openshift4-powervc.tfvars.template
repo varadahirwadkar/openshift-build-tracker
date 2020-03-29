@@ -36,4 +36,10 @@ dns_enabled     = "true"
 storage_type    = "nfs"
 nfs_volume_size = "300"
 
+e2e_tests_git = "__E2E_GIT__"
+
+e2e_tests_git_branch = "__E2E_BRANCH__"
+
+e2e_tests_exclude_list_url = "__E2E_EXCLUDE_LIST__"
+
 e2e_tests_enabled = "__ENABLE_E2E_TEST__"
