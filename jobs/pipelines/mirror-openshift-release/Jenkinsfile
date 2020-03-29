@@ -10,7 +10,7 @@ pipeline {
         }
     }
     triggers {
-        cron('H/15 * * * *')
+        cron('H/1 * * * *')
     }
     environment {
         //users and credentials. All must be defined in Jenkins Credentials
@@ -59,7 +59,8 @@ pipeline {
     }
     post {
         always {
-            notifyBySlackOcp4(currentBuild.result, null, null)
+            //notifyBySlackOcp4(currentBuild.result, null, null)
+            echo "Completed"
         }
     }
 }
