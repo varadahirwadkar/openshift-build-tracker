@@ -1,0 +1,65 @@
+@Library('pcloud-jenkins-library') _
+
+pipeline {
+    agent {
+        dockerfile {
+            dir 'images/poll'
+            additionalBuildArgs '--force-rm	--no-cache'
+            args '-v /etc/resolv.conf:/etc/resolv.conf -v /var/run/docker.sock:/var/run/docker.sock'
+            label 'daily-x86_64'
+        }
+    }
+    triggers {
+        cron('H/15 * * * *')
+    }
+    environment {
+        //users and credentials. All must be defined in Jenkins Credentials
+        DOCKER_USER = credentials('DOCKER_USER')
+        ARTIFACTORY_TOKEN = credentials('ARTIFACTORY_TOKEN')
+        DOCKER_PASSWORD = "${ARTIFACTORY_TOKEN}"
+        CI_OCP_TOKEN = credentials('CI_OCP_TOKEN')
+    }
+    stages {
+        stage('Clone mirror-openshift-releases') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'openshift_ws'], [$class: 'CleanBeforeCheckout']], submoduleCfg: [], userRemoteConfigs: [[url: 'git@github.ibm.com:powercloud-openshift/mirror-openshift-releases.git' , credentialsId: 'ibm-github']]])
+            }
+        }
+
+        stage('Get images and push') {
+            steps {
+                script {
+                    ansiColor('xterm') {
+                        echo ""
+                    }
+                    try
+                    {
+                    sh '''
+                        apt update
+                        apt install docker jq -y
+                        cd ${WORKSPACE}/openshift_ws
+                        docker login sys-powercloud-docker-local.artifactory.swg-devops.com -u ${DOCKER_USER} -p ${DOCKER_PASSWORD}
+                        wget https://mirror.openshift.com/pub/openshift-v4/clients/oc/4.3/linux/oc.tar.gz -O /tmp/oc.tar.gz
+                        tar zvxf /tmp/oc.tar.gz
+                        chmod +x oc
+                        export PATH=$PATH:$PWD
+                        oc login https://api.ci.openshift.org --token=${CI_OCP_TOKEN}
+                        oc registry login
+                        ./mirror-images.sh
+                    '''
+                    }
+                    catch (err)
+                    {
+                        echo 'Error ! Mirroring Failed!'
+                        throw err
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            notifyBySlackOcp4(currentBuild.result, null, null)
+        }
+    }
+}
