@@ -36,7 +36,7 @@ pipeline {
                     {
                     sh '''
                         apt update
-                        apt install docker jq -y
+                        apt install docker docker.io jq -y
                         cd ${WORKSPACE}/openshift_ws
                         docker login sys-powercloud-docker-local.artifactory.swg-devops.com -u ${DOCKER_USER} -p ${DOCKER_PASSWORD}
                         wget https://mirror.openshift.com/pub/openshift-v4/clients/oc/4.3/linux/oc.tar.gz -O /tmp/oc.tar.gz
