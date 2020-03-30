@@ -52,17 +52,18 @@ pipeline {
 
 
         // Node Configuration
-        VCPUS_REQ_MASTER = "8"
-        MEM_REQ_MASTER = "32"
-        PRO_UNIT_REQ_MASTER = ".8"
-        VCPUS_REQ_WORKER = "8"
-        MEM_REQ_WORKER = "32"
-        PRO_UNIT_REQ_WORKER = ".8"
+        VCPUS_REQ_MASTER = "1"
+        MEM_REQ_MASTER = "16"
+        PRO_UNIT_REQ_MASTER = ".2"
+        VCPUS_REQ_WORKER = "1"
+        MEM_REQ_WORKER = "16"
+        PRO_UNIT_REQ_WORKER = ".1"
 
-        VCPUS_REQ_BASTION = "2"
+
+        VCPUS_REQ_BASTION = "1"
         MEM_REQ_BASTION = "8"
         PRO_UNIT_REQ_BASTION = ".1"
-        VCPUS_REQ_BOOTSTRAP = "2"
+        VCPUS_REQ_BOOTSTRAP = "1"
         MEM_REQ_BOOTSTRAP = "8"
         PRO_UNIT_REQ_BOOTSTRAP = ".1"
 
@@ -85,8 +86,8 @@ pipeline {
         TERRAFORM_FORCE_KEYPAIR_CREATION = "0" //For not using build-barnes
         OPENSHIFT_POWERVC_GIT_TF_DEPLOY_BRANCH="release-4.3" //The downlod branch
 
-        NUM_OF_WORKERS = "1"
-        NUM_OF_MASTERS = "1"
+        NUM_OF_WORKERS = "3"
+        NUM_OF_MASTERS = "3"
 
         TARGET = "deploy-openshift4-powervc"
         TERMPLATE_FILE = ".${TARGET}.tfvars.template"
@@ -148,7 +149,6 @@ pipeline {
                             env.OPENSHIFT_IMAGE = readFile 'artifactory/latest-4.3-build.txt'
                             env.OPENSHIFT_IMAGE = env.OPENSHIFT_IMAGE.trim()
                         }
-
                         if (env.DEPLOY_MASTER == "false")
                         {
                             echo "Cluster cant deploy without master"
@@ -290,7 +290,7 @@ pipeline {
     post {
         always {
             archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/conformance-parallel-out.txt.tar.gz', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/summary.txt', fingerprint: true, onlyIfSuccessful: false   
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/summary.txt', fingerprint: true, onlyIfSuccessful: false
             archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/powervc.tfvars', fingerprint: true, onlyIfSuccessful: false
             script {
                 if (fileExists('deploy/summary.txt')) {

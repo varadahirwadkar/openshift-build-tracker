@@ -52,18 +52,18 @@ pipeline {
 
 
         // Node Configuration
-        VCPUS_REQ_MASTER = "8"
-        MEM_REQ_MASTER = "32"
-        PRO_UNIT_REQ_MASTER = ".8"
-        VCPUS_REQ_WORKER = "8"
-        MEM_REQ_WORKER = "32"
-        PRO_UNIT_REQ_WORKER = ".8"
+        VCPUS_REQ_MASTER = "1"
+        MEM_REQ_MASTER = "16"
+        PRO_UNIT_REQ_MASTER = ".2"
+        VCPUS_REQ_WORKER = "1"
+        MEM_REQ_WORKER = "16"
+        PRO_UNIT_REQ_WORKER = ".1"
 
 
-        VCPUS_REQ_BASTION = "2"
+        VCPUS_REQ_BASTION = "1"
         MEM_REQ_BASTION = "8"
         PRO_UNIT_REQ_BASTION = ".1"
-        VCPUS_REQ_BOOTSTRAP = "2"
+        VCPUS_REQ_BOOTSTRAP = "1"
         MEM_REQ_BOOTSTRAP = "8"
         PRO_UNIT_REQ_BOOTSTRAP = ".1"
 
@@ -87,7 +87,7 @@ pipeline {
         OPENSHIFT_POWERVC_GIT_TF_DEPLOY_BRANCH="release-4.3" //The downlod branch
 
         NUM_OF_WORKERS = "1"
-        NUM_OF_MASTERS = "1"
+        NUM_OF_MASTERS = "3"
 
         TARGET = "deploy-openshift4-powervc"
         TERMPLATE_FILE = ".${TARGET}.tfvars.template"
