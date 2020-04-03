@@ -4,6 +4,8 @@ env.DISTRO = ""
 def TIMEOUT_SEC
 def TIMEOUT_MIN
 def E2E_SUMMARY
+def clusterInfoFields = [:]
+def clusterInfo = [:]
 
 pipeline {
     agent {
@@ -103,7 +105,6 @@ pipeline {
         E2E_BRANCH = "release-4.4"
         E2E_EXCLUDE_LIST = "https://gist.githubusercontent.com/mkumatag/ee4fdfa468f43f3cabffac945ccb843c/raw/a1ab152762f84ffbfd2d43e1f0aac58d002a45f3/ocp43_power_blacklist.txt"
 
-
         OCP4_ENV = true
         //IMAGE_FILTER = "${OCP_ENV == true ? "openshift" : "cicd"}"
 
@@ -150,7 +151,6 @@ pipeline {
                             env.OPENSHIFT_IMAGE = readFile 'artifactory/latest-4.4-build.txt'
                             env.OPENSHIFT_IMAGE = env.OPENSHIFT_IMAGE.trim()
                         }
-
                         if (env.DEPLOY_MASTER == "false")
                         {
                             echo "Cluster cant deploy without master"
@@ -293,7 +293,7 @@ pipeline {
     post {
         always {
             archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/conformance-parallel-out.txt.tar.gz', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/summary.txt', fingerprint: true, onlyIfSuccessful: false   
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/summary.txt', fingerprint: true, onlyIfSuccessful: false
             archiveArtifacts allowEmptyArchive: true, artifacts: 'deploy/powervc.tfvars', fingerprint: true, onlyIfSuccessful: false
             script {
                 if (fileExists('deploy/summary.txt')) {
@@ -303,7 +303,27 @@ pipeline {
                 if ( env.OPENSHIFT_IMAGE != ""  ) {
                     env.OPENSHIFT_INSTALL_TARBALL = env.OPENSHIFT_IMAGE
                 }
+                if ( fileExists('deploy/junit_e2e.xml')) {
+                    step([$class: 'JUnitResultArchiver', allowEmptyResults: true,  testResults: 'deploy/junit_e2e.xml'])
+                }
+                else
+                {
+                    step([$class: 'JUnitResultArchiver', allowEmptyResults: true,  testResults: 'hack/dummay-test-summary.xml'])
+                    currentBuild.result = 'FAILURE'
+                }
+                clusterInfo['ocp_build'] = env.OPENSHIFT_INSTALL_TARBALL
+                clusterInfo['master_node_cpu'] = "${VCPUS_REQ_MASTER}"
+                clusterInfo['master_node_mem'] = "${MEM_REQ_MASTER}"
+                clusterInfo['worker_node_cpu'] = "${VCPUS_REQ_WORKER}"
+                clusterInfo['worker_node_mem'] = "${MEM_REQ_WORKER}"
+                clusterInfo['cluster_masters'] = "${NUM_OF_MASTERS}"
+                clusterInfo['cluster_workers'] = "${NUM_OF_WORKERS}"
+                clusterInfo['server_type'] = "${HARDWARE_CHOSE}"
+                clusterInfo['coreos_build'] = env.RHCOS_IMAGE_NAME
+
+                clusterInfoFields['clusterinfo'] = clusterInfo
             }
+            step([$class: 'InfluxDbPublisher', selectedTarget: 'influxdbmolly', customDataMap: clusterInfoFields])
             cleanWs()
             notifyBySlackOcp4(currentBuild.result, env.OPENSHIFT_INSTALL_TARBALL, E2E_SUMMARY)
         }
