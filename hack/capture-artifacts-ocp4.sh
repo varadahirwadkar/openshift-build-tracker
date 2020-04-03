@@ -27,9 +27,10 @@
         ssh -q -i id_rsa -o StrictHostKeyChecking=no root@${BASTION_IP} exit
         rc=$?
         if [ $? -eq 0 ] ; then
-            ssh -i id_rsa -o StrictHostKeyChecking=no root@${BASTION_IP} tar -czvf ~/e2e_tests_results/conformance-parallel-out.txt.tar.gz ~/e2e_tests_results/conformance-parallel-out.txt
+            ssh -i id_rsa -o StrictHostKeyChecking=no root@${BASTION_IP} tar -czvf ~/e2e_tests_results/conformance-parallel-out.txt.tar.gz ~/e2e_tests_results
             scp -i id_rsa -o StrictHostKeyChecking=no root@${BASTION_IP}:~/e2e_tests_results/conformance-parallel-out.txt.tar.gz .
             scp -i id_rsa -o StrictHostKeyChecking=no root@${BASTION_IP}:~/e2e_tests_results/summary.txt .
+            scp -i id_rsa -o StrictHostKeyChecking=no root@${BASTION_IP}:~/e2e_tests_results/conformance-parallel/junit_e2e_*.xml junit_e2e.xml
         else
             echo 'Unable to access Bastion. You may delete the VMs manually'
         fi
