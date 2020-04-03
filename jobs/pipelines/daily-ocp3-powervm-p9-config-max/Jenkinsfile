@@ -148,7 +148,8 @@ pipeline {
                         MEM_REQ_MASTER_MB = MEM_MASTER_GB * 1024
 
                         echo 'Setting-up terraform template file for Max Config PowerVM!'
-                        env.AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/pvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
+                        env.AUTH_URL="https://9.114.192.168:5000/v3/"
+                            //env.AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/pvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
                         env.AVAILABILITY_ZONE=getZone(env.VIR_CHOSE, HARDWARE_CHOSE )
                         if ("${env.AVAILABILITY_ZONE}" == null)
                         {
