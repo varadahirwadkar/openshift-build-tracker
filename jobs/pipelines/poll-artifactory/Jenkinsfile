@@ -14,7 +14,7 @@ pipeline {
         }
     }
     triggers {
-        cron('H H * * *')
+        cron('H * * * *')
     }
     stages {
         stage('Prepare Teraform Template') {
