@@ -81,7 +81,7 @@ pipeline {
                     env.OPENSHIFT_INSTALL_TARBALL = "No new build"
                 }
             }
-            notifyBySlackOcp4(currentBuild.result, env.OPENSHIFT_INSTALL_TARBALL, E2E_SUMMARY)
+            //notifyBySlackOcp4(currentBuild.result, env.OPENSHIFT_INSTALL_TARBALL, E2E_SUMMARY)
         }
     }
 }
