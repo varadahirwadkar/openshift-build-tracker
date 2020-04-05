@@ -358,7 +358,8 @@ pipeline {
         string(defaultValue: '1', description: 'Enter Number of workers needed', name: 'NumOfWorkers')
         booleanParam(defaultValue: false, name: 'EnableHA', description: 'Select if you want to enable High Availability (HA), and choose appropriate NumOfMasters/Managers/Proxies/Workers. Recommended minimum config is 3 masters (same as proxy) + 3 management + 2 worker nodes') 
         booleanParam(defaultValue: false, name: 'EnableGluster', description: 'Select if you want to enable Gluster Persistant storage')
-        string(defaultValue: '3', description: 'Enter Number of workers needed', name: 'NumOfGlusters')
+        string(defaultValue: '1', description: 'Enter Number of Glusterfs nodes needed. If 'NumOfGlusters'=3, provide this configuration in the ICPConfig section below.
+        storage-glusterfs:  storageClass:  volumeType: replicate:3', name: 'NumOfGlusters')
         booleanParam(defaultValue: false, name: 'EnableIstio', description: 'Select if you want to enable istio(Provide the required configuration in ICPConfig)')
         booleanParam(defaultValue: false, name: 'EnableMCM', description: 'Select if you want to enable multicluster-endpoint(Provide the required configuration in ICPConfig)')
         booleanParam(defaultValue: false, name: 'EnableNodeProblemDetector', description: 'Select if you want to enable node-problem-detector-draino')
