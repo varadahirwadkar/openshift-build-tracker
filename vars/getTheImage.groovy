@@ -14,7 +14,7 @@ def call(String auth_url, String distro, String filter){
             env.DISTRO="rhel"
             break
         case "RHEL8.1":
-            IMAGE=sh(returnStdout: true, script: "openstack --os-auth-url \"${auth_url}\" --insecure image list  --format value -c Name | grep -i rhel8.4| tail -n 1|tr '\n' ' ' ").trim()
+            IMAGE=sh(returnStdout: true, script: "openstack --os-auth-url \"${auth_url}\" --insecure image list  --format value -c Name | grep -i rhel8.1| tail -n 1|tr '\n' ' ' ").trim()
             env.DISTRO="rhel"
             break
         case "RHEL7.7":
