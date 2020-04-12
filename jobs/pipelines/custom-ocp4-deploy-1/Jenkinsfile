@@ -44,7 +44,7 @@ properties([
                     classpath: [],
                     sandbox: false,
                     script:
-                        'return["4.3:selected","4.4"]'
+                        'return["4.3:selected","4.4","4.5","4.6", "4.7"]'
                 ]
             ]
         ],
@@ -70,26 +70,29 @@ properties([
                     script:
                         '''
                         if (OCPBuild.equals("Nightly")) {
-
-                            def command = """ wget  --output-document  -  https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp-dev-preview/latest-$Release/"""
+                            def command = """ wget  --output-document  -  https://openshift-release-ppc64le.svc.ci.openshift.org/"""
                             build = command.execute().text
-                            def min1 = ~/<a href="/
-                            def min3 = ~/">.*/
-                            def min4 = ~/\\[/
+                            def min1 = ~/<a class="text-success" href="/
+                            def min2 = ~/\\[/
+                            def min3 = ~/\\]/
+                            def min4 = ~/<a.*">/
+                            def min5 = ~/<\\/a><\\/td>/
                             def ls =''
                             build.eachLine{
-                                if (it =~ /^<tr/) {
-                                        String lst = it.findAll(/<a href=".*/)
-                                            if (lst.contains("install")) {
-                                            if (lst.contains("linux")) {
-                                                ls = ls + " " + (lst - min1)
-                                                    ls = ls - min3
-                                                    ls = ls - min4
+                                if (it =~ /<td/) {
+                                    String lst = it.findAll(/<a class="text-success" href=".*/)
+                                    if (lst.contains (Release)) {
+                                            ls = ls + " " + (lst - min4)
+                                            ls = ls - min5
+                                            ls = ls - min2
+                                            ls = ls - min3
                                     }
-                                            }
-                                    }
+
+                                }
                             }
                             bld = ls.split() as List
+                            bld = bld.sort()
+                            bld = bld.reverse()
                             return bld
                         }
                         else
@@ -251,20 +254,20 @@ pipeline {
         }
     }
     parameters {
-        string(defaultValue: '8', description: 'Required Number of VCPUs', name: 'VcpusMaster')
-        string(defaultValue: '32', description: 'Required amount Memory', name: 'MemMaster')
+        string(defaultValue: '4', description: 'Required Number of VCPUs', name: 'VcpusMaster')
+        string(defaultValue: '16', description: 'Required amount Memory', name: 'MemMaster')
         string(defaultValue: '.4', description: 'Required Processing Units Specify a value of processor units that is not greater than the value of virtual processors or less than five percent of the value of virtual processors.', name: 'ProUnitMaster')
         booleanParam(defaultValue: true, name: 'DeployMaster', description: 'Select if you want to Deploy Master node')
-        string(defaultValue: '1', description: 'Enter Number of Masters needed', name: 'NumOfMasters')
+        string(defaultValue: '3', description: 'Enter Number of Masters needed', name: 'NumOfMasters')
 
-        booleanParam(defaultValue: false, name: 'DeployWorker', description: 'Select if you want to Deploy Worker node')
-        string(defaultValue: '4', description: 'Required Number of VCPUs(worker, gluster, proxy)', name: 'VcpusWorker')
-        string(defaultValue: '16', description: 'Required amount Memory(worker, gluster, proxy)', name: 'MemWorker')
+        booleanParam(defaultValue: true, name: 'DeployWorker', description: 'Select if you want to Deploy Worker node')
+        string(defaultValue: '2', description: 'Required Number of VCPUs(worker, gluster, proxy)', name: 'VcpusWorker')
+        string(defaultValue: '8', description: 'Required amount Memory(worker, gluster, proxy)', name: 'MemWorker')
         string(defaultValue: '.2', description: 'Required Processing Units Specify a value of processor units that is not greater than the value of virtual processors or less than five percent of the value of virtual processors.', name: 'ProUnitWorker')
         string(defaultValue: '1', description: 'Enter Number of workers needed', name: 'NumOfWorkers')
 
         string(defaultValue: '0', description: 'Enter time(in Minutes) to retain the cluster', name: 'KeepFor')
-        string(defaultValue: '', description: 'Enter Registry link for the OCP Build. This will override the Tarball', name: 'Ocpimage')
+        //string(defaultValue: '', description: 'Enter Registry link for the OCP Build. This will override the Tarball', name: 'Ocpimage')
         booleanParam(defaultValue: false, name: 'Rune2e', description: 'Select if you want to run e2e')
 
 
@@ -310,16 +313,16 @@ pipeline {
         VCPUS_REQ_WORKER = "${params.VcpusWorker}"
         MEM_REQ_WORKER = "${params.MemWorker}"
         PRO_UNIT_REQ_WORKER = "${params.ProUnitWorker}"
-        OPENSHIFT_IMAGE = "${params.Ocpimage}"
+        OPENSHIFT_IMAGE = "sys-powercloud-docker-local.artifactory.swg-devops.com/ocp-ppc64le/release-ppc64le:${params.Tarball}"
         ENABLE_E2E_TEST = "${params.Rune2e}"
 
 
         VCPUS_REQ_BASTION = "2"
         MEM_REQ_BASTION = "8"
         PRO_UNIT_REQ_BASTION = ".1"
-        VCPUS_REQ_BOOTSTRAP = "2"
-        MEM_REQ_BOOTSTRAP = "8"
-        PRO_UNIT_REQ_BOOTSTRAP = ".1"
+        VCPUS_REQ_BOOTSTRAP = "4"
+        MEM_REQ_BOOTSTRAP = "16"
+        PRO_UNIT_REQ_BOOTSTRAP = "..4"
 
         MASTER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "master"
         WORKER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "worker"
@@ -344,7 +347,7 @@ pipeline {
 
         TARGET = "deploy-openshift4-powervc"
         TERMPLATE_FILE = ".${TARGET}.tfvars.template"
-        OPENSHIFT_INSTALL_TARBALL = " https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp-dev-preview/latest-$Release/$Tarball"
+        //OPENSHIFT_INSTALL_TARBALL = " https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp-dev-preview/latest-$Release/$Tarball"
 
         REDHAT_RELEASE = "7.6"
         RHEL_USERNAME = "root"
