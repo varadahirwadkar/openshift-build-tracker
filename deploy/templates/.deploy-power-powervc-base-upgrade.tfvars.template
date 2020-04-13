@@ -42,6 +42,8 @@ os_network = "__OS_NETWORK__"
 insecure = "true"
 #verbose = "-v"
 
+glusterfs_enabled =  "__GLUSTER_FS__"
+
 offline_image_location = "__OFFLINE_IMAGE_LOCATION__"
 offline_remote_password = "__ARTIFACTORY_API_KEY__"
 
