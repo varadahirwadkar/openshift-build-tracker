@@ -2,8 +2,6 @@
 - job:
     name: {{ JOB_NAME }}
     project-type: pipeline
-    triggers:
-      - timed: '@daily'
     sandbox: true
     pipeline-scm:
       scm:
