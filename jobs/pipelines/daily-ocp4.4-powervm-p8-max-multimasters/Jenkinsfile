@@ -62,9 +62,9 @@ pipeline {
         MEM_REQ_WORKER = "32"
         PRO_UNIT_REQ_WORKER = ".8"
 
-        VCPUS_REQ_BOOTSTRAP = "16"
-        MEM_REQ_BOOTSTRAP = "32"
-        PRO_UNIT_REQ_BOOTSTRAP = ".8"
+        VCPUS_REQ_BOOTSTRAP = "2"
+        MEM_REQ_BOOTSTRAP = "16"
+        PRO_UNIT_REQ_BOOTSTRAP = ".2"
 
         VCPUS_REQ_BASTION = "2"
         MEM_REQ_BASTION = "8"
