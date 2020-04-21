@@ -349,7 +349,7 @@ pipeline {
 
         TARGET = "deploy-openshift4-powervc"
         TERMPLATE_FILE = ".${TARGET}.tfvars.template"
-        OPENSHIFT_INSTALL_TARBALL = "https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp-dev-preview/4.3.0-0.nightly-ppc64le-2020-02-20-212303/openshift-install-linux-4.3.0-0.nightly-ppc64le-2020-02-20-212303.tar.gz"
+        //OPENSHIFT_INSTALL_TARBALL = "https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp-dev-preview/4.3.0-0.nightly-ppc64le-2020-02-20-212303/openshift-install-linux-4.3.0-0.nightly-ppc64le-2020-02-20-212303.tar.gz"
 
         REDHAT_RELEASE = "7.6"
         RHEL_USERNAME = "root"
@@ -409,6 +409,7 @@ pipeline {
                             echo 'Setting-up terraform template file for PowerVM!'
                             env.AUTH_URL=sh(returnStdout: true, script: "grep AUTH_URL conf/infra/pvm.conf|awk 'BEGIN{FS=\"AUTH_URL=\"}{print \$2}'|tr '\n' ' '").trim()
                         }
+                        env.OPENSHIFT_INSTALL_TARBALL=getOpenshiftBuild(RELEASE)
                         env.AVAILABILITY_ZONE=getZone(env.VIR_CHOSE, HARDWARE_CHOSE )
                         if ("${AVAILABILITY_ZONE}" == null)
                         {
