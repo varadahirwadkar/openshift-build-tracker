@@ -104,6 +104,7 @@ pipeline {
         E2E_GIT = "https://github.com/openshift/origin"
         E2E_BRANCH = "release-4.3"
         E2E_EXCLUDE_LIST = "https://gist.githubusercontent.com/sudeeshjohn/2888f911f2a955a1282e338995c94813/raw/4eada90a4a30de2e26d02af13403c7884bf6efdd/ocp43_power_blacklist.txt"
+        CS_INSTALL = "false"
 
         OCP4_ENV = true
         //IMAGE_FILTER = "${OCP_ENV == true ? "openshift" : "cicd"}"

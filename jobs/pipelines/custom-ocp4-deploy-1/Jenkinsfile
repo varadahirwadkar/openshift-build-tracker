@@ -269,6 +269,7 @@ pipeline {
         string(defaultValue: '0', description: 'Enter time(in Minutes) to retain the cluster', name: 'KeepFor')
         //string(defaultValue: '', description: 'Enter Registry link for the OCP Build. This will override the Tarball', name: 'Ocpimage')
         booleanParam(defaultValue: false, name: 'Rune2e', description: 'Select if you want to run e2e')
+        booleanParam(defaultValue: false, name: 'DeployCS', description: 'Select if you want to install Common Services')
 
 
     }
@@ -315,6 +316,7 @@ pipeline {
         PRO_UNIT_REQ_WORKER = "${params.ProUnitWorker}"
         OPENSHIFT_IMAGE = "sys-powercloud-docker-local.artifactory.swg-devops.com/ocp-ppc64le/release-ppc64le:${params.Tarball}"
         ENABLE_E2E_TEST = "${params.Rune2e}"
+        CS_INSTALL = "${params.DeployCS}"
 
 
         VCPUS_REQ_BASTION = "2"
@@ -347,7 +349,7 @@ pipeline {
 
         TARGET = "deploy-openshift4-powervc"
         TERMPLATE_FILE = ".${TARGET}.tfvars.template"
-        //OPENSHIFT_INSTALL_TARBALL = " https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp-dev-preview/latest-$Release/$Tarball"
+        OPENSHIFT_INSTALL_TARBALL = "https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp-dev-preview/latest-4.3/openshift-install-linux-4.3.0-0.nightly-ppc64le-2020-03-11-144705.tar.gz"
 
         REDHAT_RELEASE = "7.6"
         RHEL_USERNAME = "root"
