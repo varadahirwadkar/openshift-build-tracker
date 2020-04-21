@@ -324,7 +324,7 @@ pipeline {
         PRO_UNIT_REQ_BASTION = ".1"
         VCPUS_REQ_BOOTSTRAP = "4"
         MEM_REQ_BOOTSTRAP = "16"
-        PRO_UNIT_REQ_BOOTSTRAP = "..4"
+        PRO_UNIT_REQ_BOOTSTRAP = ".4"
 
         MASTER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "master"
         WORKER_TEMPLATE = "${env.BUILD_TAG}" + "-" + "worker"
