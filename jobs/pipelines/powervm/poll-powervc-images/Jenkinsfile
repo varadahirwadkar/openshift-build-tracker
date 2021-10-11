@@ -61,7 +61,7 @@ pipeline {
                     cat images.scnlpowercloud.all.date.sorted.txt | grep 'rhel8\\.3'  | awk '{print $2" "$1}'|head -n 1 > rhel-8.3-powercloud-latest.txt || true
                     cat images.scnlpowercloud.all.date.sorted.txt | grep 'rhel8\\.4'  | awk '{print $2" "$1}'|head -n 1 > rhel-8.4-powercloud-latest.txt || true
                     '''
-                    env.OS_AUTH_URL = env.URL_SCNLCICDCLOUD
+                    env.OS_AUTH_URL = env.URL_SCNLCICDPOWERVC
                     sh '''
                     openstack image list --insecure --format value -c Name -c ID > images.scnlcicdcloud.all.txt
                     for i in `cat images.scnlcicdcloud.all.txt|awk '{print $2}'`; do line=$(grep $i images.scnlcicdcloud.all.txt) ;  create_date=$(openstack image show $i --insecure | grep created_at | awk  'BEGIN{FS="|"}{print $3}' | sed 's/ *$//') ; echo -n  $line" " >> images.scnlcicdcloud.all.date.txt; echo $create_date >> images.scnlcicdcloud.all.date.txt ;done
