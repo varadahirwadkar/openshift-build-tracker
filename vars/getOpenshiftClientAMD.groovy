@@ -1,6 +1,6 @@
 @NonCPS
  def call(release){
-     def command = """ wget  --output-document  -  https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest-$release/"""
+     def command = """ curl -L  https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest-$release/"""
      build = command.execute().text
      def min1 = ~/<a href="/
      def min3 = ~/">.*/
