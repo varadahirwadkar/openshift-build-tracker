@@ -31,6 +31,7 @@
         {% elif 'daily-ocp4.10-powervm-p9-max' in JOB_NAME %}"00 23 * * * "
         {% elif 'daily-ocp4.10-powervm-p9-sriov-min' in JOB_NAME %}"00 01 * * 1,4 "
         {% elif 'daily-ocp4.10-powervm-p9-ssp-min' in JOB_NAME %}"00 01 * * 2,5 "
+        {% elif 'daily-ocp4.10-powervm-p9-extproxy-min' in JOB_NAME %}"00 01 * * 3,6 "
 
 
         {% elif 'mirror-openshift-release' in JOB_NAME %}"@hourly"
