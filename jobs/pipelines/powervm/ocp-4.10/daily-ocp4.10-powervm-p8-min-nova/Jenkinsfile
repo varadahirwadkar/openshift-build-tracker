@@ -25,14 +25,14 @@ pipeline {
         //Env constants
         HARDWARE_CHOSE = "P8"
         TERRAFORM_VER = "0.13.0"
-        AVAILABILITY_ZONE = "p8_tuleta"
-        OCP_RELEASE="4.9"
+        AVAILABILITY_ZONE = "nova"
+        OCP_RELEASE="4.10"
         TARGET = "deploy-openshift4-powervc"
         TEMPLATE_FILE = ".${TARGET}.tfvars.template"
         POWERVS = false
         SCRIPT_DEPLOYMENT = false
         WAIT_FOR_DEBUG = "1"
-        REDHAT_RELEASE = "8.3"
+        REDHAT_RELEASE = "8.4"
 
         //Branch
         OPENSHIFT_POWERVC_GIT_TF_DEPLOY_BRANCH="master"//The download branch
@@ -56,9 +56,6 @@ pipeline {
             steps {
                 setupCommonEnvironmentVariables()
                 setupClusterConfig("${CONFIG_TYPE}")
-                script {
-                    env.SCG_ID = "708870a7-a9d9-49bf-83a1-71a3c6423c47"
-                }
             }
         }
         stage('pull artifact') {
@@ -107,6 +104,11 @@ pipeline {
                         }
                         else {
                             echo "cicd-rhel-${REDHAT_RELEASE}.latest.txt file does not exist. Please check poll-powervc-images job"
+                            throw err
+                        }
+                        if (env.DEPLOY_MASTER == "false")
+                        {
+                            echo "Cluster cant deploy without master"
                             throw err
                         }
                         env.OPENSHIFT_INSTALL_TARBALL=getOpenshiftBuild(OCP_RELEASE)

@@ -23,16 +23,16 @@ pipeline {
         OS_AUTH_URL=credentials('URL_SCNLCICDPOWERVC')
 
         //Env constants
-        HARDWARE_CHOSE = "P8"
+        HARDWARE_CHOSE = "P9"
         TERRAFORM_VER = "0.13.0"
-        AVAILABILITY_ZONE = "p8_tuleta"
-        OCP_RELEASE="4.9"
+        AVAILABILITY_ZONE = "p9"
+        OCP_RELEASE="4.10"
         TARGET = "deploy-openshift4-powervc"
         TEMPLATE_FILE = ".${TARGET}.tfvars.template"
         POWERVS = false
         SCRIPT_DEPLOYMENT = false
         WAIT_FOR_DEBUG = "1"
-        REDHAT_RELEASE = "8.3"
+        REDHAT_RELEASE = "8.4"
 
         //Branch
         OPENSHIFT_POWERVC_GIT_TF_DEPLOY_BRANCH="master"//The download branch
@@ -57,7 +57,9 @@ pipeline {
                 setupCommonEnvironmentVariables()
                 setupClusterConfig("${CONFIG_TYPE}")
                 script {
-                    env.SCG_ID = "708870a7-a9d9-49bf-83a1-71a3c6423c47"
+                //ssp specific variables
+                env.SCG_ID = "a10b9c74-2598-415e-8da7-728d1598fcb3"
+                env.VOLUME_STORAGE_TEMPLATE = "ocp_ssp base template"
                 }
             }
         }
@@ -65,8 +67,6 @@ pipeline {
             steps {
                 script {
                     getArtifacts("mirror-openshift-release", "latest-${OCP_RELEASE}-build.txt")
-                    getArtifacts("powervm/poll-powervc-images", "cicd-rhcos-${OCP_RELEASE}.latest.txt")
-                    getArtifacts("powervm/poll-powervc-images", "cicd-rhel-${REDHAT_RELEASE}.latest.txt")
                 }
             }
         }
@@ -91,22 +91,14 @@ pipeline {
                             echo "latest-${OCP_RELEASE}-build.txt file does not exist. Please check mirror-openshift-release job"
                             throw err
                         }
-                        if (fileExists("deploy/artifactory/cicd-rhcos-${OCP_RELEASE}.latest.txt")) {
-                            env.RHCOS_IMAGE = readFile "deploy/artifactory/cicd-rhcos-${OCP_RELEASE}.latest.txt"
-                            env.RHCOS_IMAGE_NAME = env.RHCOS_IMAGE.split()[0].trim()
-                            env.RHCOS_IMAGE_ID = env.RHCOS_IMAGE.split()[1].trim()
-                        }
-                        else {
-                            echo "cicd-rhcos-${OCP_RELEASE}.latest.txt file does not exist. Please check poll-powervc-images job"
-                            throw err
-                        }
-                        if (fileExists("deploy/artifactory/cicd-rhel-${REDHAT_RELEASE}.latest.txt")) {
-                            env.BASTION_IMAGE = readFile "deploy/artifactory/cicd-rhel-${REDHAT_RELEASE}.latest.txt"
-                            env.BASTION_IMAGE_NAME = env.BASTION_IMAGE.split()[0].trim()
-                            env.BASTION_IMAGE_ID = env.BASTION_IMAGE.split()[1].trim()
-                        }
-                        else {
-                            echo "cicd-rhel-${REDHAT_RELEASE}.latest.txt file does not exist. Please check poll-powervc-images job"
+                        env.RHCOS_IMAGE_NAME = "ssp-rhcos-410-84"
+                        env.RHCOS_IMAGE_ID = "362f3ba1-89ed-4f66-8841-fd3fa521185a"
+
+                        env.BASTION_IMAGE_NAME = "rhel_84_ssp"
+                        env.BASTION_IMAGE_ID = "8da28e4b-f1a1-4a83-b510-18718ffa3058"
+                        if (env.DEPLOY_MASTER == "false")
+                        {
+                            echo "Cluster cant deploy without master"
                             throw err
                         }
                         env.OPENSHIFT_INSTALL_TARBALL=getOpenshiftBuild(OCP_RELEASE)

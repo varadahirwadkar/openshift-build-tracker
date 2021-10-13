@@ -32,7 +32,7 @@ pipeline {
         POWERVS = false
         SCRIPT_DEPLOYMENT = false
         WAIT_FOR_DEBUG = "1"
-        REDHAT_RELEASE = "8.3"
+        REDHAT_RELEASE = "8.4"
 
         //Branch
         OPENSHIFT_POWERVC_GIT_TF_DEPLOY_BRANCH="master"//The download branch
