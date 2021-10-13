@@ -58,7 +58,7 @@ pipeline {
                 setupClusterConfig("${CONFIG_TYPE}")
                 script {
                 //ssp specific variables
-                env.SCG_ID = "74919986-66d6-4a25-8128-b1feadd43256"
+                env.SCG_ID = "a10b9c74-2598-415e-8da7-728d1598fcb3"
                 env.VOLUME_STORAGE_TEMPLATE = "ocp_ssp base template"
                 }
             }
@@ -92,10 +92,10 @@ pipeline {
                             throw err
                         }
                         env.RHCOS_IMAGE_NAME = "ssp_rhcos_49.84_0803"
-                        env.RHCOS_IMAGE_ID = "73316e14-1116-4381-a199-074122e0e702"
+                        env.RHCOS_IMAGE_ID = "00b5c4e6-0c8d-48ae-85ed-c803c38e4e80"
 
                         env.BASTION_IMAGE_NAME = "rhel_84_ssp"
-                        env.BASTION_IMAGE_ID = "c7800595-dbae-4f05-b738-a1911458d58c"
+                        env.BASTION_IMAGE_ID = "8da28e4b-f1a1-4a83-b510-18718ffa3058"
                         if (env.DEPLOY_MASTER == "false")
                         {
                             echo "Cluster cant deploy without master"
