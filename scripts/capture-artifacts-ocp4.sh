@@ -12,7 +12,10 @@
     else
         cp ${WORKSPACE}/deploy/.${TARGET}.tfvars ${TARGET}.tfvars
         sed -i "s|password.*=.*$|password = ************|g" ${TARGET}.tfvars
+        sed -i "s|user_name.*=.*$|user_name = ************|g" ${TARGET}.tfvars
+        sed -i "s|auth_url.*=.*$|auth_url = ************|g" ${TARGET}.tfvars
         sed -i "s|rhel_subscription_password.*=.*$|rhel_subscription_password = ************|g" ${TARGET}.tfvars
+        sed -i "s|rhel_subscription_username.*=.*$|rhel_subscription_username = ************|g" ${TARGET}.tfvars
         sed -i "s|github_token.*=.*$|github_token = ************|g" ${TARGET}.tfvars
         sed -i "s|ibmcloud_api_key.*=.*$|ibmcloud_api_key = ************|g" ${TARGET}.tfvars
         cp ${TARGET}.tfvars vars.tfvars
