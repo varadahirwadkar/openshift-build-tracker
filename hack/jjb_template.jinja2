@@ -33,6 +33,9 @@
         {% elif 'daily-ocp4.10-powervm-p9-ssp-min' in JOB_NAME %}"00 03 * * 2,5 "
         {% elif 'daily-ocp4.10-powervm-p9-extproxy-min' in JOB_NAME %}"00 03 * * 3,6 "
 
+        {% elif 'daily-ocp4.9-powervm-p10-min' in JOB_NAME %}"00 15 * * *  "
+        {% elif 'daily-ocp4.10-powervm-p10-min' in JOB_NAME %}"00 00 * * *  "
+
 
         {% elif 'mirror-openshift-release' in JOB_NAME %}"@hourly"
         {% elif 'poll-powervs-images' in JOB_NAME %}"@daily"
