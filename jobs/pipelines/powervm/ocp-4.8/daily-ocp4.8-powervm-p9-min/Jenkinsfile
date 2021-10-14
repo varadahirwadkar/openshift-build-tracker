@@ -43,7 +43,7 @@ pipeline {
         GOLANG_TARBALL="https://dl.google.com/go/go1.16.5.linux-ppc64le.tar.gz"
 
         // Type of configuration
-        CONFIG_TYPE="max"
+        CONFIG_TYPE="min"
 	 }
 
     stages {
