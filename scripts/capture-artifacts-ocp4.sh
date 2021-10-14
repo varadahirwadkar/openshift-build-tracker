@@ -17,6 +17,7 @@
         sed -i "s|rhel_subscription_password.*=.*$|rhel_subscription_password = ************|g" ${TARGET}.tfvars
         sed -i "s|rhel_subscription_username.*=.*$|rhel_subscription_username = ************|g" ${TARGET}.tfvars
         sed -i "s|github_token.*=.*$|github_token = ************|g" ${TARGET}.tfvars
+        sed -i "s|github_username.*=.*$|github_username = ************|g" ${TARGET}.tfvars
         sed -i "s|ibmcloud_api_key.*=.*$|ibmcloud_api_key = ************|g" ${TARGET}.tfvars
         cp ${TARGET}.tfvars vars.tfvars
         tar -czvf ${WORKSPACE}/deploy/logs.tar.gz ${WORKSPACE}/deploy/.${TARGET}/logs
