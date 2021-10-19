@@ -2,8 +2,8 @@ def call() {
     script {
        def scale_summary = ""
        def summary = ""
-        if (fileExists('deploy/time_taken_namespaces') && fileExists('deploy/time_taken_namespaces')) {
-                    scale_summary = readFile 'deploy/time_taken_namespaces'
+        if (fileExists('time_taken_namespaces') && fileExists('time_taken_deployments')) {
+                    scale_summary = readFile 'time_taken_namespaces'
                     scale_summary.split('\n').each { line ->
                         if ( line  != null) {
                             if (line.contains('real')){
@@ -17,7 +17,7 @@ def call() {
                             }
                         }
                     }
-                    scale_summary = readFile 'deploy/time_taken_deployments'
+                    scale_summary = readFile 'time_taken_deployments'
                     scale_summary.split('\n').each { line ->
                         if ( line  != null) {
                             if (line.contains('real')){
