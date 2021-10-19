@@ -16,23 +16,26 @@ def call() {
 
             // Bellow 4 variables are not used. Disabled in template
             env.HELPERNODE_REPO = "https://github.com/RedHatOfficial/ocp4-helpernode"
-            env.HELPERNODE_TAG = "1ac7f276b537cd734240eda9ed554a254ba80629"
+            env.HELPERNODE_TAG = "324e09e3d303101874f540730c993cd986ddbc04"
             env.INSTALL_PLAYBOOK_REPO = "https://github.com/ocp-power-automation/ocp4-playbooks"
             switch (env.OCP_RELEASE) {
+                case "4.10":
+                    env.INSTALL_PLAYBOOK_TAG = "7c5c0158fb96df7816b79da2274ff21b2fd61c1c"
+                    break
+                case "4.9":
+                    env.INSTALL_PLAYBOOK_TAG = "7c5c0158fb96df7816b79da2274ff21b2fd61c1c"
+                    break
                 case "4.8":
-                    env.INSTALL_PLAYBOOK_TAG = "64fd5edadf380820f71e44bb6bca93e9b083fe5c"
+                    env.INSTALL_PLAYBOOK_TAG = "7c5c0158fb96df7816b79da2274ff21b2fd61c1c"
                     break
                 case "4.7":
-                    env.INSTALL_PLAYBOOK_TAG = "1d4c9cad20d7559392d34990ccde5813fdb855a1"
+                    env.INSTALL_PLAYBOOK_TAG = "de8b4bf5f243f40dae91a3a0cc67a55c571d210e"
                     break
                 case "4.6":
-                    env.INSTALL_PLAYBOOK_TAG = "e89bef76cec089a481d6de2b7fa07944ae0481a5"
-                    break
-                case "4.5":
-                    env.INSTALL_PLAYBOOK_TAG = "15d226e52b0bae11943e3127206dd454891032c8"
+                    env.INSTALL_PLAYBOOK_TAG = "2888fad354e72af39af1be4f75efaea224187b6b"
                     break
                 default:
-                     env.INSTALL_PLAYBOOK_TAG = "64fd5edadf380820f71e44bb6bca93e9b083fe5c"
+                     env.INSTALL_PLAYBOOK_TAG = "7c5c0158fb96df7816b79da2274ff21b2fd61c1c"
             }
 
             //Upgrade variables
