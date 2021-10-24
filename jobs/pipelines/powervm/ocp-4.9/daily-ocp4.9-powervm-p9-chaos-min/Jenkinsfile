@@ -22,8 +22,8 @@ pipeline {
         PULL_SECRET = credentials('PULL_SECRET')
         OS_AUTH_URL=credentials('URL_SCNLCICDPOWERVC')
         // key and certificate for scnl cicd powervc for chaos tests
-        SCNL_CERT_KEY = credentials('SCNL_CERT_KEY')
-        SCNL_CERT = credentials('SCNL_CERT')
+        SCNL_CICD_POWERVC_CERT_KEY = credentials('SCNL_CICD_POWERVC_CERT_KEY')
+        SCNL_CICD_POWERVC_CERT = credentials('SCNL_CICD_POWERVC_CERT')
 
         //Env constants
         HARDWARE_CHOSE = "P9"
@@ -182,8 +182,8 @@ pipeline {
                            cd ${WORKSPACE}
                            mkdir -p /etc/pki/tls/certs
                            mkdir -p /etc/pki/tls/private
-                           cp $SCNL_CERT /etc/pki/tls/certs/powervc.crt
-                           cp $SCNL_CERT_KEY /etc/pki/tls/private/powervc.key
+                           cp $SCNL_CICD_POWERVC_CERT /etc/pki/tls/certs/powervc.crt
+                           cp $SCNL_CICD_POWERVC_CERT_KEY /etc/pki/tls/private/powervc.key
                            chmod a+rx /etc/pki/tls/private/powervc.key
                            chmod a+rx /etc/pki/tls/certs/powervc.crt
                            ls -ltrR /etc/pki/tls/
