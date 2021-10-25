@@ -21,15 +21,12 @@ pipeline {
         REDHAT_PASSWORD = credentials('REDHAT_PASSWORD')
         PULL_SECRET = credentials('PULL_SECRET')
         OS_AUTH_URL=credentials('URL_SCNLCICDPOWERVC')
-        // key and certificate for scnl cicd powervc for chaos tests
-        SCNL_CICD_POWERVC_CERT_KEY = credentials('SCNL_CICD_POWERVC_CERT_KEY')
-        SCNL_CICD_POWERVC_CERT = credentials('SCNL_CICD_POWERVC_CERT')
 
         //Env constants
-        HARDWARE_CHOSE = "P9"
+        HARDWARE_CHOSE = "P8"
         TERRAFORM_VER = "0.13.0"
-        AVAILABILITY_ZONE = "p9_pvm"
-        OCP_RELEASE="4.9"
+        AVAILABILITY_ZONE = "p8_pvm"
+        OCP_RELEASE="4.8"
         TARGET = "deploy-openshift4-powervc"
         TEMPLATE_FILE = ".${TARGET}.tfvars.template"
         POWERVS = false
@@ -41,26 +38,33 @@ pipeline {
         OPENSHIFT_POWERVC_GIT_TF_DEPLOY_BRANCH="master"//The download branch
 
         //E2e and Scale specific variables
-        ENABLE_E2E_TEST="false"
+        ENABLE_E2E_TEST="true"
         ENABLE_SCALE_TEST="false"
         GOLANG_TARBALL="https://dl.google.com/go/go1.16.5.linux-ppc64le.tar.gz"
 
         // Type of configuration
         CONFIG_TYPE="min"
+
+        //Upgrade Variables
+        UPGRADE_DELAY_TIME =  "600"
+        UPGRADE_PAUSE_TIME = "90"
 	 }
 
     stages {
+        stage('Clone ansible extra') {
+            steps {
+                cloneRepo("git@github.ibm.com:redstack-power/ocp4_ansible_extras.git", "ansible_extra")
+            }
+        }
         stage('Setup Common Environment Variables') {
             steps {
                 setupCommonEnvironmentVariables()
                 setupClusterConfig("${CONFIG_TYPE}")
-                script{
-                    //Additional parameter for chaos test
-                    env.OS_REGION_NAME="RegionOne"
-                    env.OS_USER_DOMAIN_NAME="Default"
-                    //Kraken repository variables
-                    env.OPENSHIFT_CHAOS_GIT_DEPLOY_BRANCH="master" //The download branch
-                    env.OPENSHIFT_CHAOS_GIT_DEPLOY_PROJECT = "https://github.com/cloud-bulldozer/kraken"
+                script {
+                    env.UPGRADE_OCP_RELEASE="4.9"
+                    env.MOUNT_ETCD_RAMDISK="false"
+                    env.E2E_BRANCH="release-${env.UPGRADE_OCP_RELEASE}"
+                    env.E2E_EXCLUDE_LIST="https://raw.github.ibm.com/redstack-power/e2e-exclude-list/${env.UPGRADE_OCP_RELEASE}-powervm/ocp${env.UPGRADE_OCP_RELEASE}_power_exclude_list.txt"
                 }
             }
         }
@@ -68,6 +72,7 @@ pipeline {
             steps {
                 script {
                     getArtifacts("mirror-openshift-release", "latest-${OCP_RELEASE}-build.txt")
+                    getArtifacts("mirror-openshift-release", "latest-${UPGRADE_OCP_RELEASE}-stable-build.txt")
                     getArtifacts("powervm/poll-powervc-images", "cicd-rhcos-${OCP_RELEASE}.latest.txt")
                     getArtifacts("powervm/poll-powervc-images", "cicd-rhel-${REDHAT_RELEASE}.latest.txt")
                 }
@@ -92,6 +97,15 @@ pipeline {
                         }
                         else {
                             echo "latest-${OCP_RELEASE}-build.txt file does not exist. Please check mirror-openshift-release job"
+                            throw err
+                        }
+                        env.UPGRADE_IMAGE  = ""
+                        if (fileExists("deploy/artifactory/latest-${UPGRADE_OCP_RELEASE}-stable-build.txt")) {
+                            env.UPGRADE_IMAGE = readFile "deploy/artifactory/latest-${UPGRADE_OCP_RELEASE}-stable-build.txt"
+                            env.UPGRADE_IMAGE = env.UPGRADE_IMAGE.trim()
+                        }
+                        else {
+                            echo "latest-${UPGRADE_OCP_RELEASE}-stable-build.txt file does not exist. Please check mirror-openshift-release job"
                             throw err
                         }
                         if (fileExists("deploy/artifactory/cicd-rhcos-${OCP_RELEASE}.latest.txt")) {
@@ -165,67 +179,27 @@ pipeline {
                 validateCoStatus()
             }
         }
+        stage('Setup and run ansible extra') {
+            steps {
+               setupAndRunE2e()
+            }
+        }
         stage('Gather pprof and prometheus data') {
             steps {
                 //gatherPrometheusData()
                 echo "gatherPrometheusData() is skipped for now"
             }
         }
-        stage('Clone the Kraken project and run chaos tests') {
-            steps {
-                script {
-                    ansiColor('xterm') {
-                        echo ""
-                    }
-                    try {
-                        sh '''
-                           cd ${WORKSPACE}
-                           mkdir -p /etc/pki/tls/certs
-                           mkdir -p /etc/pki/tls/private
-                           cp $SCNL_CICD_POWERVC_CERT /etc/pki/tls/certs/powervc.crt
-                           cp $SCNL_CICD_POWERVC_CERT_KEY /etc/pki/tls/private/powervc.key
-                           chmod a+rx /etc/pki/tls/private/powervc.key
-                           chmod a+rx /etc/pki/tls/certs/powervc.crt
-                           ls -ltrR /etc/pki/tls/
-                           git clone $OPENSHIFT_CHAOS_GIT_DEPLOY_PROJECT
-                           git checkout $OPENSHIFT_CHAOS_GIT_DEPLOY_BRANCH
-                           cd ${WORKSPACE}/kraken
-                           pip3 install -r requirements.txt
-                           cd ${WORKSPACE}/kraken/config
-                           sed -i "s|- scenarios/node_hog_engine.yaml|#- scenarios/node_hog_engine.yaml|g" config.yaml
-                           sed -i "s|- scenarios/time_scenarios_example.yml|#- scenarios/time_scenarios_example.yml|g" config.yaml
-                           cd ${WORKSPACE}/kraken/scenarios
-                           sed -i "s|- node_crash_scenario|#- node_crash_scenario|g" node_scenarios_example.yml
-                           sed -i "s|cloud_type: aws|cloud_type: openstack|g" node_scenarios_example.yml
-                           sed -i "s|timeout: 120|timeout: 300|g" node_scenarios_example.yml
-                           sed -i "s|infra|worker|g" node_scenarios_example.yml
-                           cd ${WORKSPACE}/kraken
-                           export OS_CACERT="/etc/pki/tls/certs/powervc.crt"
-                           export OS_KEY="/etc/pki/tls/private/powervc.key"
-                           python3 run_kraken.py 2>&1 > KrakenOutput.txt
-                        '''
-                        }
-                    catch (err) {
-                        echo 'Error ! Cloning Kraken and running chaos tests failed!'
-                        env.FAILED_STAGE=env.STAGE_NAME
-                        throw err
-                    }
-                }
-            }
-        }
     }
     post {
         always {
-            archiveAllArtifacts("deploy/vars.tfvars","cpu-pre.pprof", "heap-pre.pprof", "prometheus.tar.gz",
-                "deploy/cron.log", "kraken/KrakenOutput.txt",
-                "kraken/config/config.yaml","kraken/scenarios/node_scenarios_example.yml", "must-gather.tar.gz")
+            archiveAllArtifacts("deploy/conformance-parallel-out.txt.tar.gz", "deploy/summary.txt", "deploy/vars.tfvars",
+                "cpu-pre.pprof", "heap-pre.pprof", "prometheus.tar.gz", "deploy/cron.log", "must-gather.tar.gz")
             cleanupOcp4Cluster()
             checkInfraError()
-            script {
-                OCP4_BUILD = env.OPENSHIFT_INSTALL_TARBALL.split(':')[1]
-                message = "OCP4 Build: `${env.OCP_RELEASE_TAG}`, RHCOS: `${env.RHCOS_IMAGE_NAME}` "
-                notifyBySlack(currentBuild.result, message)
-            }
+            processE2eResults()
+            dbDashboardUpdateE2e()
+            notifyBySlack(currentBuild.result, env.MESSAGE)
             cleanWs()
         }
     }

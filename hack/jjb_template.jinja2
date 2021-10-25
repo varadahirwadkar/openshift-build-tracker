@@ -15,8 +15,9 @@
         {% elif 'daily-ocp4.10-powervs-toronto01-p9-min' in JOB_NAME %}"0 21 * * * "
 
         {% elif 'daily-ocp4.6-powervm-p8-min' in JOB_NAME %}"00 07 * * * "
-        {% elif 'daily-ocp4.6-to-4.7-powervm-p8-min-upgrade' in JOB_NAME %}"00 08 * * 2,3"
-        {% elif 'daily-ocp4.7-to-4.8-powervm-p8-min-upgrade' in JOB_NAME %}"00 08 * * 1,4,5,6"
+        {% elif 'daily-ocp4.6-to-4.7-powervm-p8-min-upgrade' in JOB_NAME %}"00 08 * * 2"
+        {% elif 'daily-ocp4.7-to-4.8-powervm-p8-min-upgrade' in JOB_NAME %}"00 08 * * 1,5"
+        {% elif 'daily-ocp4.8-to-4.9-powervm-p8-min-upgrade' in JOB_NAME %}"00 08 * * 3,4,6"
         {% elif 'daily-ocp4.9-powervm-p8-vscsi-min' in JOB_NAME %}"00 08 * * 7"
         {% elif 'daily-ocp4.9-powervm-p8-min' in JOB_NAME %}"00 12,00 * * * "
         {% elif 'daily-ocp4.10-powervm-p8-min' in JOB_NAME %}"00 13 * * *  "
