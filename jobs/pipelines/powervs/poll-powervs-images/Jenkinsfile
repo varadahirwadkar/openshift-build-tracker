@@ -1,4 +1,4 @@
-@Library('pcloud-jenkins-library') _
+@Library('jenkins-upstream-library') _
 //Define Global variable
 def INSTANCE_NAME_LIST = [
                     "ocp-cicd-london-06",
