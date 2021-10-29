@@ -1,0 +1,43 @@
+@Library('pcloud-jenkins-library') _
+
+pipeline {
+    agent {
+	    kubernetes {
+        	inheritFrom 'jenkins-agent'
+      	    	label 'jenkins-cleanup-job'
+      		defaultContainer 'jnlp'
+      		yamlFile 'hack/ibmcloud-build-pod.yaml'
+    	   }
+    }
+    environment {
+        //users and credentials. All must be defined in Jenkins Credentials
+        IBMCLOUD_API_KEY = credentials('IBMCLOUD_API_KEY')
+        CRN = "crn:v1:bluemix:public:power-iaas:tor01:a/65b64c1f1c29460e8c2e4bbfbd893c2c:4a1f10a2-0797-4ac8-9c41-44bc04b2d18f::"
+        PVSADM_VERSION = "v0.1.4-alpha.1"
+	}
+
+	stages {
+        stage('Cleanup PowerVS Resources') {
+            steps {
+                 container('ibmcloud'){
+		  	script {
+				sh(returnStatus: false, returnStdout: false, script: "curl -sL https://raw.githubusercontent.com/ppc64le-cloud/pvsadm/master/get.sh | VERSION=${PVSADM_VERSION} FORCE=1 bash; pvsadm version")
+				sh '''
+				    echo "IBM cloud login"
+				    ibmcloud login -a cloud.ibm.com -r us-south -g ocp-cicd-resource-group -q --apikey=${IBMCLOUD_API_KEY}
+				    ibmcloud pi service-target ${CRN}
+				    chmod +x ./scripts/cleanup-powervs-resources.sh
+				    ./scripts/cleanup-powervs-resources.sh 2>&1 | tee cleanup.log
+				'''
+		        }
+                 }
+            }
+        }
+    }
+    post {
+        always {
+            archiveArtifacts allowEmptyArchive: true, artifacts: "cleanup.log", fingerprint: true, onlyIfSuccessful: false
+            cleanWs()
+        }
+    }
+}
