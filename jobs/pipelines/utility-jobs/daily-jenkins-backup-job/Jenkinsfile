@@ -1,4 +1,4 @@
-@Library('pcloud-jenkins-library') _
+@Library('jenkins-upstream-library') _
 
 pipeline {
 	agent {

@@ -1,4 +1,4 @@
-@Library('pcloud-jenkins-library') _
+@Library('jenkins-upstream-library') _
 
 //Get Infra and OS from user
 properties([
@@ -549,8 +549,10 @@ pipeline {
                         echo "HOLDING THE CLUSTER TEAR DOWN FOR ${TIMEOUT_MIN} MINUTES"
                         sleep TIMEOUT_SEC
                         }
-                    finally {
-                        cleanupOcp4Cluster()
+                    catch (err) {
+                            echo 'Error ! Timeout stage failed!'
+                            env.FAILED_STAGE=env.STAGE_NAME
+                            throw err
                     }
                 }
             }
