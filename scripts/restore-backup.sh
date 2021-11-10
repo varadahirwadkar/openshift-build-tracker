@@ -14,10 +14,10 @@ done
 ibmcloud -v
 if [ $? -ne 0 ]; then
    apt update; apt-get install -y wget curl; \
-   wget https://download.clis.cloud.ibm.com/ibm-cloud-cli/1.6.0/IBM_Cloud_CLI_1.6.0_amd64.tar.gz; \
+   wget https://download.clis.cloud.ibm.com/ibm-cloud-cli/2.1.1/IBM_Cloud_CLI_2.1.1_amd64.tar.gz --no-check-certificate; \
    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"; \
    install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl; \
-   tar -xvzf "./IBM_Cloud_CLI_1.6.0_amd64.tar.gz"; \
+   tar -xvzf "./IBM_Cloud_CLI_2.1.1_amd64.tar.gz"; \
    ./Bluemix_CLI/install; \
    ibmcloud update -f; \
    ibmcloud config --check-version false
@@ -33,7 +33,6 @@ if [ -n "$JENKINS_BUCKET" ]; then
   ibmcloud cos download --bucket "${JENKINS_BUCKET}" --key "${BACKUP_FILE}" "./${BACKUP_FILE}"
   if [ $? -eq 0 ]; then
      cd /var
-     mv ./jenkins_home ./jenkins_home_old
      tar -xvf "/${BACKUP_FILE}"
      rm -rf  ./jenkins_home_old /${BACKUP_FILE} /create-backup.sh /key
   else
@@ -47,7 +46,6 @@ else
    ibmcloud cos download --bucket "${INFLUXDB_BUCKET}" --key ${BACKUP_FILE} "./${BACKUP_FILE}"
    if [ $? -eq 0 ]; then
     cd /var/lib
-    mv ./influxdb ./influxdb_old
     tar -xvf "/${BACKUP_FILE}"
     rm -rf  ./influxdb_old /${BACKUP_FILE} /create-backup.sh /key
   else
