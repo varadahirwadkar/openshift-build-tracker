@@ -3,6 +3,7 @@
 def INSTANCE_NAME_LIST = [
                     "ocp-cicd-london-06",
                     "ocp-cicd-toronto-01",
+                    "ocp-cicd-montreal-01",
                     "ocp-validation-montreal-01"
                     ]
 pipeline {
