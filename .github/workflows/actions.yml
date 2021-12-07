@@ -1,0 +1,32 @@
+
+# This is a basic workflow to help you get started with Actions
+
+name: ocp_latest_builds
+
+# Controls when the workflow will run
+on:
+  push:
+    branches:
+      - main 
+  schedule:
+    # Runs "every 30 minutes" 
+    - cron: '*/30 * * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+          
+      # Install jq command
+      - name: Install jq
+        run: sudo apt-get install jq -y
+
+      # Run the script
+      - name: Run the version updater
+        run: ./run.sh
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_EMAIL: ${{ secrets.GH_EMAIL }}
+          GH_NAME: ${{ secrets.GH_NAME }}
