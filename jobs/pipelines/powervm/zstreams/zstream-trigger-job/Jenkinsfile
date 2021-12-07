@@ -2,110 +2,90 @@ pipeline {
     agent any
 
     parameters {
-
-        string(defaultValue: 'default', description: 'Latest build for 4.6 release', name: 'release_46')
-
-        string(defaultValue: 'default', description: 'Latest build for 4.7 release', name: 'release_47')
-        
-        string(defaultValue: 'default', description: 'Latest build for 4.8 release', name: 'release_48')
-        
-        string(defaultValue: 'default', description: 'Latest build for 4.9 release', name: 'release_49')
-        
-        string(defaultValue: 'default', description: 'Latest build for 4.10 release', name: 'release_410')
+        string(defaultValue: 'default', description: 'Latest builds release', name: 'release_builds')
     }
-    environment{
-        SKIP_POST_INIT = false
-    }
+
     stages {
       
-        stage('First time initialization of Job') {
-            when { expression { return "${params.release_46}" != "default" || "${params.release_47}" != "default" || "${params.release_48}" != "default" || "${params.release_49}" != "default" || "${params.release_410}" != "default"; } }
+        stage('pull artifacts') {
             steps {
                 script {
-                    sh "python3 hack/read_quay.py ${params.release_46} ${params.release_47} ${params.release_48} ${params.release_49} ${params.release_410}"
-                    env.SKIP_POST_INIT = true
-                    if ("${params.release_46}" != "default"){
-                        OCP_NEW_BUILD = "quay.io/openshift-release-dev/ocp-release:${params.release_46}"
-                                
-                        build job: 'varad_remote_trigger', wait: false,parameters: [
-                            string(name: 'Release', value: "4.6"),
-                            string(name: 'Build', value: "${OCP_NEW_BUILD}"),
-                            string(name: 'KeepFor', value: "1")
-                        ]
-                        sleep 10
-                    }else if ("${params.release_47}" != "default"){
-                        OCP_NEW_BUILD = "quay.io/openshift-release-dev/ocp-release:${params.release_47}"
-                                
-                        build job: 'varad_remote_trigger', wait: false,parameters: [
-                            string(name: 'Release', value: "4.7"),
-                            string(name: 'Build', value: "${OCP_NEW_BUILD}"),
-                            string(name: 'KeepFor', value: "1")
-                        ]
-                        sleep 10
-                    }else if ("${params.release_48}" != "default"){
-                        OCP_NEW_BUILD = "quay.io/openshift-release-dev/ocp-release:${params.release_48}"
-                                
-                        build job: 'varad_remote_trigger', wait: false,parameters: [
-                            string(name: 'Release', value: "4.8"),
-                            string(name: 'Build', value: "${OCP_NEW_BUILD}"),
-                            string(name: 'KeepFor', value: "1")
-                        ]
-                        sleep 10
-                    }else if ("${params.release_49}" != "default"){
-                        OCP_NEW_BUILD = "quay.io/openshift-release-dev/ocp-release:${params.release_49}"
-                                
-                        build job: 'varad_remote_trigger', wait: false,parameters: [
-                            string(name: 'Release', value: "4.9"),
-                            string(name: 'Build', value: "${OCP_NEW_BUILD}"),
-                            string(name: 'KeepFor', value: "1")
-                        ]
-                        sleep 10
-                    }else if ("${params.release_410}" != "default"){
-                        OCP_NEW_BUILD = "quay.io/openshift-release-dev/ocp-release:${params.release_410}"
-                                
-                        build job: 'varad_remote_trigger', wait: false,parameters: [
-                            string(name: 'Release', value: "4.10"),
-                            string(name: 'Build', value: "${OCP_NEW_BUILD}"),
-                            string(name: 'KeepFor', value: "1")
-                        ]
-                        sleep 10
-                    }
+                    step([  $class: 'CopyArtifact',
+                    filter: "*.txt",
+                    fingerprintArtifacts: true,
+                    projectName: currentBuild.projectName,
+                    target: 'artifactory',
+                    selector: lastSuccessful()
+                    ])
                 }
             }
         }
+        stage('First time initialization of Job') {
+            when { expression { return "${params.release_builds}" != "default" ; } }
+            steps {
+                script {
+                    env.SKIP_POST_INIT = "true"
+
+                    def release_builds_list = params.release_builds.split(',')
+                      for (int i=0; i<release_builds_list.size();i++) {
+                        println release_builds_list[i]
+                    }
+                    for (int i=0; i<release_builds_list.size();i++) {
+                    release = release_builds_list[i].split('\\.[0-9]{1,2}$')[0]
+                    release_version = release_builds_list[i].split('\\.')[-1]
+                    if (release != ""){
+                        sh "python3 hack/read_quay.py ${release} ${release_version} "
+                        
+                        OCP_NEW_BUILD = "quay.io/openshift-release-dev/ocp-release:${release_builds_list[i]}-ppc64le"
+                    
+                        echo "Default New Build is ${OCP_NEW_BUILD}"
+                        build job: 'varad_remote_trigger', wait: false,parameters: [
+                            string(name: 'Release', value: "${release}"),
+                            string(name: 'Build', value: "${OCP_NEW_BUILD}"),
+                            string(name: 'KeepFor', value: "20")
+                        ]
+                        sleep 5
+
+                        }
+                    }
+                       
+                }
+            }
+        }
+
         
         stage('Execute python script and Trigger new builds') {
-           when { expression { return env.SKIP_POST_INIT == true; } }
+           when { expression { return env.SKIP_POST_INIT != "true"; } }
             steps {
                 script {
                     
                     release = "4.6"
 
                     // Cheking for newer builds of the releases
-                    while(fileExists("${release}-latest-build.txt")){
+                    while(fileExists("artifactory/${release}-latest-build.txt")){
 
-                        OCP_LAST_BUILD = readFile "${release}-latest-build.txt"
+                        OCP_LAST_BUILD = readFile "artifactory/${release}-latest-build.txt"
                         OCP_LAST_BUILD = OCP_LAST_BUILD.trim()
 
                         echo "Older build is: ${OCP_LAST_BUILD}"
                         echo "Checking newer build for:  ${release}"
-                        sh "python3 hack/read_quay.py ${release}"
-
+                        sh "python3 hack/read_quay.py ${release} 0"
+                        
                         OCP_NEW_BUILD = readFile "${release}-latest-build.txt"
                         OCP_NEW_BUILD = OCP_NEW_BUILD.trim()
                         
                         if(OCP_NEW_BUILD != ""){
                             if (OCP_LAST_BUILD != OCP_NEW_BUILD){
-                                echo "Triggering Builds for ${OCP_NEW_BUILD}"
+                                //echo "Triggering Builds for ${OCP_NEW_BUILD}"
                                 
                                 OCP_NEW_BUILD = "quay.io/openshift-release-dev/ocp-release:${OCP_NEW_BUILD}"
                                 echo "New Build is ${OCP_NEW_BUILD}"
-                                // build job: 'varad_remote_trigger', wait: false,parameters: [
-                                //     string(name: 'Release', value: "${release}"),
-                                //     string(name: 'Build', value: "${OCP_NEW_BUILD}"),
-                                //     string(name: 'KeepFor', value: "1")
-                                // ]
-                                sleep 10
+                                build job: 'varad_remote_trigger', wait: false,parameters: [
+                                    string(name: 'Release', value: "${release}"),
+                                    string(name: 'Build', value: "${OCP_NEW_BUILD}"),
+                                    string(name: 'KeepFor', value: "20")
+                                ]
+                                sleep 5
                             }
                         }
 
@@ -116,7 +96,7 @@ pipeline {
                 
                     //Checking for next major release
                     echo "Checking newer build for:  ${release}"
-                    sh "python3 hack/read_quay.py ${release}"
+                    sh "python3 hack/read_quay.py ${release} 0"
 
                     //If next major release exists trigger the jobs
                     if (fileExists("${release}-latest-build.txt")) {
@@ -127,16 +107,34 @@ pipeline {
                            
                             OCP_NEW_BUILD = "quay.io/openshift-release-dev/ocp-release:${OCP_NEW_BUILD}"
                             echo "New Build is ${OCP_NEW_BUILD}"
-                            // build job: 'varad_remote_trigger', wait: false,parameters: [
-                            //     string(name: 'Release', value: "${release}"),
-                            //     string(name: 'Build', value: "${OCP_NEW_BUILD}"),
-                            //     string(name: 'KeepFor', value: "1")
-                            // ]       
-                            sleep 10
+                            build job: 'varad_remote_trigger', wait: false,parameters: [
+                                string(name: 'Release', value: "${release}"),
+                                string(name: 'Build', value: "${OCP_NEW_BUILD}"),
+                                string(name: 'KeepFor', value: "20")
+                            ]       
+                            sleep 5
                         } 
                     }
                 }            
             }
-        }      
+        }  
+    }
+
+    post {
+        always {
+            archiveArtifacts allowEmptyArchive: true, artifacts: '4.6-latest-build.txt', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: '4.7-latest-build.txt', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: '4.8-latest-build.txt', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: '4.9-latest-build.txt', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: '4.10-latest-build.txt', fingerprint: true, onlyIfSuccessful: false
+
+            archiveArtifacts allowEmptyArchive: true, artifacts: '4.6-stable-build.txt', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: '4.7-stable-build.txt', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: '4.8-stable-build.txt', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: '4.9-stable-build.txt', fingerprint: true, onlyIfSuccessful: false
+            archiveArtifacts allowEmptyArchive: true, artifacts: '4.10-stable-build.txt', fingerprint: true, onlyIfSuccessful: false
+
+
+        }    
     }
 }

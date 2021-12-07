@@ -27,9 +27,9 @@ def read_last_releases(release):
     return build
 
 # Generating next expected builds for particular release
-def get_next_build(release):
-    if os.path.isfile(release + "-latest-build.txt") == False:
-        current_build   = release + ".0-ppc64le"
+def get_next_build(release, release_version):
+    if os.path.isfile(release + "-latest-build.txt") == False or release_version != "0":
+        current_build   = release + "." + release_version + "-ppc64le"
         next_build      = current_build
     else:
         current_build   = read_last_releases(release + "-latest-build.txt")[0].strip()
@@ -66,8 +66,8 @@ def clean(release):
 
       
 # saving build informations
-def get_newer_releases(release):
-    current_build, next_build = get_next_build(release)
+def get_newer_releases(release, release_version="0"):
+    current_build, next_build = get_next_build(release,release_version)
 
     if current_build != "Empty" and next_build != "Empty":
         build_info = check_quay_image(next_build) 
@@ -80,40 +80,14 @@ def get_newer_releases(release):
                 clean(release)
             save_releases(release + "-latest-build.txt", "w", build_info['name'])
         else:
-            print("No new build found for the release : " + release)
-
-def initialize_latest_releases(releases):
-
-    release_46  = releases[1]
-    release_47  = releases[2]
-    release_48  = releases[3]
-    release_49  = releases[4]
-    release_410 = releases[5]
-    
-    if release_46 != "default":
-        save_releases("4.6-latest-build.txt", "w", release_46 + "-ppc64le")
-    if release_47 != "default":
-        save_releases("4.7-latest-build.txt", "w", release_47 + "-ppc64le")
-    if release_48 != "default":
-        save_releases("4.8-latest-build.txt", "w", release_48 + "-ppc64le")
-    if release_49 != "default":
-        save_releases("4.9-latest-build.txt", "w", release_49 + "-ppc64le")
-    if release_410 != "default":
-        save_releases("4.10-latest-build.txt", "w", release_410 + "-ppc64le")
-    
+            print("No new build found for the release : " + release + "." + release_version)
+  
 if __name__ == "__main__":
-    if len(sys.argv) == 2  or sys.argv[1] != "default":
-        release_no = sys.argv[1].split(".")[-1]
-        if len(release_no) == 1:
-            get_newer_releases(str("{:.1f}".format(float(sys.argv[1]))))
-        else:
-            get_newer_releases(str("{:.2f}".format(float(sys.argv[1]))))
+    release = sys.argv[1].split(".")[-1]
+    release_version = sys.argv[2]
+
+    if len(release) == 1:
+        get_newer_releases(str("{:.1f}".format(float(sys.argv[1]))), release_version)
     else:
-        initialize_latest_releases(sys.argv)
-        
-
-        
-
-
-
-        
+        get_newer_releases(str("{:.2f}".format(float(sys.argv[1]))), release_version)
+    
