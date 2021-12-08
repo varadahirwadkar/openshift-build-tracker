@@ -43,7 +43,7 @@ pipeline {
                         build job: 'varad_remote_trigger', wait: false,parameters: [
                             string(name: 'Release', value: "${release}"),
                             string(name: 'Build', value: "${OCP_NEW_BUILD}"),
-                            string(name: 'KeepFor', value: "20")
+                            string(name: 'KeepFor', value: "720")
                         ]
                         sleep 5
 
@@ -84,7 +84,7 @@ pipeline {
                                 build job: 'varad_remote_trigger', wait: false,parameters: [
                                     string(name: 'Release', value: "${release}"),
                                     string(name: 'Build', value: "${OCP_NEW_BUILD}"),
-                                    string(name: 'KeepFor', value: "20")
+                                    string(name: 'KeepFor', value: "720")
                                 ]
                                 sleep 5
                             }
@@ -111,7 +111,7 @@ pipeline {
                             build job: 'varad_remote_trigger', wait: false,parameters: [
                                 string(name: 'Release', value: "${release}"),
                                 string(name: 'Build', value: "${OCP_NEW_BUILD}"),
-                                string(name: 'KeepFor', value: "20")
+                                string(name: 'KeepFor', value: "720")
                             ]       
                             sleep 5
                         } 
