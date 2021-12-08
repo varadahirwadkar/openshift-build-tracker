@@ -123,17 +123,38 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts allowEmptyArchive: true, artifacts: '4.6-latest-build.txt', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: '4.7-latest-build.txt', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: '4.8-latest-build.txt', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: '4.9-latest-build.txt', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: '4.10-latest-build.txt', fingerprint: true, onlyIfSuccessful: false
 
-            archiveArtifacts allowEmptyArchive: true, artifacts: '4.6-stable-build.txt', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: '4.7-stable-build.txt', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: '4.8-stable-build.txt', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: '4.9-stable-build.txt', fingerprint: true, onlyIfSuccessful: false
-            archiveArtifacts allowEmptyArchive: true, artifacts: '4.10-stable-build.txt', fingerprint: true, onlyIfSuccessful: false
+            script{
+                release = "4.6"
+                while(fileExists("${release}-latest-build.txt")){
+                    echo "Archiving ${release}"
+                    archiveArtifacts allowEmptyArchive: false, artifacts: "${release}-latest-build.txt", fingerprint: true, onlyIfSuccessful: false
+                    release_number    = release.split('\\.')
+                    release_number[1] = (release_number[1].toInteger() + 1).toString()
+                    release           = release_number[0] + '.' + release_number[1]
+                }
+                release = "4.6"
+                while(fileExists("${release}-stable-build.txt")){
+                    echo "Archiving ${release}"
+                    archiveArtifacts allowEmptyArchive: false, artifacts: "${release}-stable-build.txt", fingerprint: true, onlyIfSuccessful: false
+                    release_number    = release.split('\\.')
+                    release_number[1] = (release_number[1].toInteger() + 1).toString()
+                    release           = release_number[0] + '.' + release_number[1]
+                }
+
+                cleanWs()
+            }
+            // archiveArtifacts allowEmptyArchive: true, artifacts: '4.6-latest-build.txt', fingerprint: true, onlyIfSuccessful: false
+            // archiveArtifacts allowEmptyArchive: true, artifacts: '4.7-latest-build.txt', fingerprint: true, onlyIfSuccessful: false
+            // archiveArtifacts allowEmptyArchive: true, artifacts: '4.8-latest-build.txt', fingerprint: true, onlyIfSuccessful: false
+            // archiveArtifacts allowEmptyArchive: true, artifacts: '4.9-latest-build.txt', fingerprint: true, onlyIfSuccessful: false
+            // archiveArtifacts allowEmptyArchive: true, artifacts: '4.10-latest-build.txt', fingerprint: true, onlyIfSuccessful: false
+
+            // archiveArtifacts allowEmptyArchive: true, artifacts: '4.6-stable-build.txt', fingerprint: true, onlyIfSuccessful: false
+            // archiveArtifacts allowEmptyArchive: true, artifacts: '4.7-stable-build.txt', fingerprint: true, onlyIfSuccessful: false
+            // archiveArtifacts allowEmptyArchive: true, artifacts: '4.8-stable-build.txt', fingerprint: true, onlyIfSuccessful: false
+            // archiveArtifacts allowEmptyArchive: true, artifacts: '4.9-stable-build.txt', fingerprint: true, onlyIfSuccessful: false
+            // archiveArtifacts allowEmptyArchive: true, artifacts: '4.10-stable-build.txt', fingerprint: true, onlyIfSuccessful: false
 
 
         }    
