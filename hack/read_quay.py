@@ -28,11 +28,11 @@ def read_last_releases(release):
 
 # Generating next expected builds for particular release
 def get_next_build(release, release_version):
-    if os.path.isfile(release + "-latest-build.txt") == False or release_version != "0":
+    if os.path.isfile("artifactory/" + release + "-latest-build.txt") == False or release_version != "0":
         current_build   = release + "." + release_version + "-ppc64le"
         next_build      = current_build
     else:
-        current_build   = read_last_releases(release + "-latest-build.txt")[0].strip()
+        current_build   = read_last_releases("artifactory/" + release + "-latest-build.txt")[0].strip()
         if current_build != "Empty":
             build_split     = current_build.split("-")
             build_split     = build_split[0].split(".")
@@ -58,7 +58,7 @@ def check_quay_image(tag):
 
 # Keeping only last 10 older builds in the stable-build.txt files
 def clean(release):
-    builds = read_last_releases(release + "-stable-build.txt")
+    builds = read_last_releases("artifactory/" + release + "-stable-build.txt")
     if len(builds) > 10:
         print("Cleaning the older build history for the release: " + release)
         builds.pop(0)
@@ -80,7 +80,7 @@ def get_newer_releases(release, release_version="0"):
                 clean(release)
             save_releases(release + "-latest-build.txt", "w", build_info['name'])
         else:
-            print("No new build found for the release : " + release + "." + release_version)
+            print("No new build found for the release : "  + next_build)
   
 if __name__ == "__main__":
     release = sys.argv[1].split(".")[-1]
